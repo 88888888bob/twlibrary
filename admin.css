@@ -1,0 +1,356 @@
+/* admin.css */
+/* --- General Reset & Base --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f4f6f9; /* Light grey background for the page */
+    color: #333; /* Default text color */
+    font-size: 14px; /* Base font size */
+    line-height: 1.6;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+    color: #007bff; /* Default link color */
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    width: 250px;
+    background: #343a40; /* Dark background for sidebar */
+    color: white;
+    position: fixed;
+    height: 100%;
+    top: 0;
+    left: 0;
+    padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+}
+
+.sidebar .logo {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 30px;
+    font-weight: bold;
+    padding: 0 15px;
+    color: #fff;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar ul li a {
+    display: block;
+    padding: 12px 20px; /* Adjusted padding */
+    color: #c2c7d0; /* Lighter grey for text */
+    text-decoration: none;
+    border-left: 4px solid transparent; /* Thicker indicator border */
+    transition: background-color 0.2s ease, color 0.2s ease, border-left-color 0.2s ease;
+    font-size: 0.95em;
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li a.active {
+    background: #495057; /* Slightly lighter dark for hover/active */
+    color: #fff;
+    border-left-color: #007bff; /* Blue indicator */
+}
+.sidebar ul li a i {
+    margin-right: 12px; /* Increased space for icon */
+    width: 18px; /* Fixed width for icon alignment */
+    text-align: center;
+}
+
+.sidebar ul .sub-menu {
+    background: #3f474e; /* Sub-menu background */
+    padding-left: 15px;
+    display: none;
+}
+.sidebar ul li.open > .sub-menu, /* Class 'open' to keep submenu visible */
+.sidebar ul li:hover > .sub-menu { /* Show on hover as well */
+    display: block;
+}
+.sidebar ul .sub-menu li a {
+    padding: 10px 20px 10px 25px; /* Indented sub-menu items */
+    font-size: 0.9em;
+    border-left-width: 0; /* No indicator border for sub-items */
+}
+.sidebar ul .sub-menu li a:hover,
+.sidebar ul .sub-menu li a.active {
+    background-color: #52595f;
+    border-left-width: 0;
+}
+
+
+/* --- Main Content Area --- */
+.content {
+    margin-left: 250px; /* Space for sidebar */
+    padding: 25px; /* Increased padding */
+}
+
+.content-section {
+    background: #fff;
+    padding: 20px 25px; /* Consistent padding */
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); /* Material-like shadow */
+    margin-bottom: 25px;
+}
+
+.content-section h2 {
+    margin-top: 0;
+    color: #343a40; /* Darker heading color */
+    padding-bottom: 15px; /* Increased padding */
+    border-bottom: 1px solid #e9ecef; /* Lighter border */
+    margin-bottom: 25px;
+    font-weight: 600;
+    font-size: 1.5em; /* Larger heading */
+}
+.content-section h2 i {
+    margin-right: 10px;
+    color: #007bff;
+}
+
+/* --- Dashboard --- */
+.dashboard {
+    display: flex;
+    gap: 25px; /* Increased gap */
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.dashboard-item {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    flex-basis: calc(25% - 20px); /* Aim for 4 items per row, adjust based on gap */
+    min-width: 200px; /* Minimum width before wrapping */
+    flex-grow: 1;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e3e6f0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.dashboard-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.dashboard-item h3 {
+    margin-top: 0;
+    color: #5a5c69;
+    font-size: 1em; /* Slightly smaller title */
+    margin-bottom: 10px;
+}
+.dashboard-item p {
+    font-size: 2.2em; /* Larger numbers */
+    font-weight: 700; /* Bolder */
+    color: #007bff;
+    margin-bottom: 0;
+}
+
+/* --- Lists and Tables --- */
+.list-header {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.search-container { display: flex; align-items: center; }
+#searchInput, #userSearchInput { /* Combined common search input styles */
+    padding: 10px 15px; /* Increased padding */
+    border: 1px solid #ced4da;
+    border-radius: 5px; /* Slightly more rounded */
+    width: 280px; /* Wider search input */
+    margin-right: 8px;
+    font-size: 0.95em;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+#searchInput:focus, #userSearchInput:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    outline: none;
+}
+
+.data-table { /* Generic table style */
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-radius: 5px;
+    overflow: hidden;
+}
+.data-table th, .data-table td {
+    border-bottom: 1px solid #e9ecef; /* Lighter border */
+    padding: 12px 15px;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.9em;
+}
+.data-table th {
+    background-color: #f8f9fa; /* Very light grey for header */
+    color: #495057; /* Darker text for header */
+    font-weight: 600;
+    white-space: nowrap; /* Prevent header text wrapping */
+}
+.data-table tbody tr:hover {
+    background-color: #f1f3f5; /* Hover color */
+}
+.data-table td button.btn-sm { /* Smaller buttons in tables */
+    padding: 6px 10px;
+    font-size: 0.85em;
+    margin-right: 4px;
+}
+.data-table td .role-badge {
+    padding: 4px 10px; /* Adjusted padding */
+    border-radius: 12px; /* More pill-like */
+    font-size: 0.75em; /* Smaller badge text */
+    font-weight: 600;
+    color: white;
+    text-transform: capitalize;
+}
+.role-admin { background-color: #dc3545; }
+.role-teacher { background-color: #ffc107; color: #212529 !important; }
+.role-student { background-color: #28a745; }
+
+/* --- Forms --- */
+.form-container {
+    background: #fff;
+    padding: 30px; /* Increased padding */
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    max-width: 650px; /* Slightly wider form */
+    margin: 20px auto;
+}
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #343a40;
+    font-size: 1.4em;
+}
+.form-container h2 i { margin-right: 8px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9em;
+}
+.form-group label .required-star { color: red; margin-left: 3px; }
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="date"],
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 0.95em;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.form-group input:focus, .form-group select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    outline: none;
+}
+.form-group .selected-user-display { /* For user search selection display */
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 0.9em;
+    color: #007bff;
+    font-style: italic;
+}
+
+.form-actions { margin-top: 30px; text-align: right; }
+.form-actions button { margin-left: 10px; }
+
+/* --- Buttons (General & Specific) --- */
+.btn, .btn-add, .btn-edit, .btn-delete, .btn-submit, .btn-cancel, .btn-search, .btn-filter {
+    padding: 10px 18px; /* Increased padding */
+    border: none;
+    border-radius: 5px; /* Slightly more rounded */
+    cursor: pointer;
+    margin-right: 8px; /* Consistent margin */
+    color: white;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    font-weight: 500; /* Medium weight */
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-transform: uppercase; /* Optional: for more "buttony" feel */
+    letter-spacing: 0.5px; /* Optional */
+}
+.btn:active, .btn-add:active, /* etc. for all button types */ {
+    transform: scale(0.98); /* Slight press effect */
+}
+.btn i, .btn-add i, .btn-edit i, .btn-delete i, .btn-search i, .btn-filter i { margin-right: 8px; }
+
+.btn-add, .btn-submit { background-color: #28a745; } .btn-add:hover, .btn-submit:hover { background-color: #218838; }
+.btn-edit { background-color: #ffc107; color: #212529 !important; } .btn-edit:hover { background-color: #e0a800; }
+.btn-delete { background-color: #dc3545; } .btn-delete:hover { background-color: #c82333; }
+.btn-cancel { background-color: #6c757d; } .btn-cancel:hover { background-color: #5a6268; }
+.btn-search { background-color: #007bff; } .btn-search:hover { background-color: #0069d9;}
+.btn-filter { background-color: #17a2b8; } .btn-filter:hover { background-color: #138496;}
+.btn-filter.active { background-color: #007bff; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+
+/* --- Custom Modal Styles --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); /* Darker overlay */
+    display: none; justify-content: center; align-items: center;
+    z-index: 2000; padding: 15px; /* Padding for smaller screens */
+}
+.modal-content {
+    background: white; padding: 25px 30px; border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25); /* Softer shadow */
+    text-align: center; min-width: 320px; max-width: 500px; /* Adjusted width */
+    width: 90%; /* Responsive width */
+    animation: modalFadeIn 0.3s ease-out;
+}
+@keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-content h3 { margin-top: 0; color: #333; font-size: 1.4em; margin-bottom: 15px;}
+.modal-content p { margin-bottom: 25px; color: #555; line-height: 1.6; font-size: 1em;}
+.modal-buttons button { padding: 10px 22px; margin: 0 8px; border-radius: 5px; cursor: pointer; font-weight: 500; min-width: 90px; border: 1px solid transparent; }
+.modal-btn-confirm { background-color: #007bff; color: white; border-color: #007bff;} .modal-btn-confirm:hover { background-color: #0056b3; border-color: #0056b3;}
+.modal-btn-cancel { background-color: #6c757d; color: white; border-color: #6c757d;} .modal-btn-cancel:hover { background-color: #545b62; border-color: #545b62;}
+.modal-btn-ok { background-color: #28a745; color: white; border-color: #28a745;} .modal-btn-ok:hover { background-color: #1e7e34; border-color: #1e7e34;}
+.modal-btn-delete { background-color: #dc3545; color: white; border-color: #dc3545;} .modal-btn-delete:hover { background-color: #c82333; border-color: #c82333;}
+
+
+/* --- Loading Spinner --- */
+.loading-spinner {
+    border: 5px solid #f3f3f3; /* Light grey */
+    border-top: 5px solid #007bff; /* Blue */
+    border-radius: 50%;
+    width: 40px; /* Slightly larger */
+    height: 40px;
+    animation: spin 0.8s linear infinite; /* Faster spin */
+    margin: 30px auto; /* Centered with more margin */
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- Utility Classes --- */
+.text-center { text-align: center; }
+.mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; } .mt-3 { margin-top: 1rem; }
+.mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 1rem; }
+/* Add more as needed */

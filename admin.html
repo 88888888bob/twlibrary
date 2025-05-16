@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理页面</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="logo">后台管理</div>
+        <ul>
+            <li><a href="#" data-module="dashboard" data-action="showDashboard"><i class="fas fa-tachometer-alt"></i> 仪表盘</a></li>
+            <li>
+                <a href="#" data-module="books" data-action="showBookList"><i class="fas fa-book"></i> 图书管理</a>
+                <ul class="sub-menu">
+                    <li><a href="#" data-module="books" data-action="showAddBookForm"><i class="fas fa-plus"></i> 添加图书</a></li>
+                    <li><a href="#" data-module="books" data-action="showBookList"><i class="fas fa-list"></i> 图书列表</a></li>
+                    <li><a href="#" data-module="books" data-action="showCategoryManagement"><i class="fas fa-tags"></i> 图书分类</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#" data-module="borrow" data-action="showBorrowedRecords"><i class="fas fa-exchange-alt"></i> 借阅流通</a>
+                 <ul class="sub-menu">
+                    <li><a href="#" data-module="borrow" data-action="showBorrowBookForm"><i class="fas fa-arrow-circle-up"></i> 办理借阅</a></li>
+                    <li><a href="#" data-module="borrow" data-action="showReturnBookForm"><i class="fas fa-arrow-circle-down"></i> 办理归还</a></li>
+                    <li><a href="#" data-module="borrow" data-action="showBorrowedRecords"><i class="fas fa-history"></i> 借阅记录</a></li>
+                    <li><a href="#" data-module="borrow" data-action="showOverdueBooks"><i class="fas fa-exclamation-triangle"></i> 逾期图书</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#" data-module="users" data-action="showUserList"><i class="fas fa-users"></i> 用户管理</a>
+            </li>
+            <li><a href="#" data-action="logoutUser"><i class="fas fa-sign-out-alt"></i> 退出</a></li> <!-- Changed action -->
+        </ul>
+    </div>
+    <div class="content" id="contentArea">
+        <!-- Content will be loaded here by JavaScript modules -->
+    </div>
+
+    <!-- Custom Modal HTML Structure (保持不变) -->
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">通知</h3>
+            <p id="modalMessage">这是一条消息。</p>
+            <div class="modal-buttons">
+                <button id="modalConfirmBtn" class="modal-btn-confirm" style="display:none;">确认</button>
+                <button id="modalCancelBtn" class="modal-btn-cancel" style="display:none;">取消</button>
+                <button id="modalOkBtn" class="modal-btn-ok" style="display:none;">好的</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Search Modal (保持不变) -->
+    <div class="modal-overlay" id="userSearchModal">
+         <div class="modal-content" style="min-width: 400px; text-align: left;">
+            <h3><i class="fas fa-user-search"></i> 搜索用户</h3>
+            <div class="form-group">
+                <label for="userSearchModalInput">输入用户名或邮箱：</label>
+                <input type="text" id="userSearchModalInput" class="form-control" style="width: calc(100% - 22px);">
+            </div>
+            <button class="btn btn-search" onclick="performUserSearchInModal()" style="margin-bottom: 15px;"><i class="fas fa-search"></i> 搜索</button>
+            <div id="userSearchModalResults" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 5px;">
+                <p>请输入关键词搜索。</p>
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px; text-align:right;">
+                <button class="modal-btn-cancel" onclick="closeUserSearchModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/admin-modals.js"></script>   <!-- Modal logic first -->
+    <script src="js/admin-utils.js"></script>    <!-- Utilities (API calls, loading) -->
+    <script src="js/admin-dashboard.js"></script>
+    <script src="js/admin-books.js"></script>
+    <script src="js/admin-borrow.js"></script>
+    <script src="js/admin-users.js"></script>
+    <script src="js/admin-main.js"></script>     <!-- Main control logic last -->
+</body>
+</html>

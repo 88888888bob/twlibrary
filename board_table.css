@@ -1,0 +1,270 @@
+/* board_table.css */
+@import url('https://fonts.googleapis.com/css2?family=Jaro:opsz@6..72&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap'); /* Added Roboto for better readability */
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Roboto", "Jaro", sans-serif; /* Roboto first, Jaro as fallback */
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1.6;
+    color: #333; /* Default text color */
+}
+
+/* --- Navigation Bar --- */
+nav {
+    background: #0082e6; /* Your blue color */
+    height: 80px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: sticky; /* Make nav sticky */
+    top: 0;
+    z-index: 1000;
+}
+
+label.logo {
+    color: white;
+    font-size: 30px; /* Adjusted size */
+    line-height: 80px;
+    padding: 0 50px; /* Adjusted padding */
+    font-weight: bold;
+    font-family: "Jaro", serif; /* Keep Jaro for logo if desired */
+}
+
+nav ul {
+    float: right;
+    margin-right: 20px;
+    list-style: none;
+}
+
+nav ul li {
+    display: inline-block;
+    line-height: 80px;
+    margin: 0 8px; /* Slightly more margin */
+}
+
+nav ul li a {
+    color: white;
+    font-size: 16px; /* Adjusted size */
+    padding: 10px 15px; /* Adjusted padding */
+    border-radius: 4px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-weight: 500;
+}
+
+nav ul li a.active,
+nav ul li a:hover {
+    background: #0066c4; /* Darker blue for hover/active */
+    color: #fff;
+}
+
+.checkbtn {
+    font-size: 28px; /* Adjusted size */
+    color: white;
+    float: right;
+    line-height: 80px;
+    margin-right: 40px;
+    cursor: pointer;
+    display: none; /* Hidden by default for larger screens */
+}
+
+#check {
+    display: none; /* Hide the checkbox */
+}
+
+/* --- Main Section (Background) --- */
+section {
+    /* background: url('path/to/your/old-books-436498_1280.jpg') no-repeat center center fixed; */
+    /* Note: Using fixed paths like C:/LMS project/old-books-436498_1280.jpg will not work on a web server. */
+    /* Use a relative path or a URL. For now, I'll use a placeholder color. */
+    background-color: #f4f7f6;
+    background-size: cover;
+    min-height: calc(100vh - 80px); /* Ensure it fills at least the viewport height minus nav */
+    padding: 20px;
+}
+
+/* --- Leaderboard Specific Styles --- */
+.leaderboard-header {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 25px; /* Increased margin */
+    font-size: 2.2em; /* Larger header */
+    color: #2c3e50; /* Darker color */
+    font-family: "Jaro", serif;
+}
+.leaderboard-header i {
+    color: #f1c40f; /* Gold color for trophy */
+    margin-right: 10px;
+}
+
+.controls {
+    text-align: center;
+    margin-bottom: 30px; /* Increased margin */
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex; /* Flex for better alignment */
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    gap: 15px; /* Space between control items */
+}
+.controls label {
+    margin-right: 5px;
+    font-weight: 500;
+    color: #555;
+}
+.controls select, .controls button {
+    padding: 10px 15px; /* Increased padding */
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+    font-size: 0.95em;
+}
+.controls select {
+    min-width: 150px; /* Give select some width */
+}
+.controls button {
+    background-color: #007bff; /* Consistent blue */
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+.controls button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+.controls button i {
+    margin-right: 5px;
+}
+
+
+/* --- Leaderboard Table --- */
+#leaderboardTableContainer {
+    max-width: 800px; /* Max width for the table container */
+    margin: 0 auto; /* Center the container */
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 10px 0; /* Padding for table inside */
+    overflow-x: auto; /* Allow horizontal scroll on small screens if table is too wide */
+}
+
+table { /* Applies to the table inside #leaderboardTableContainer */
+  border-collapse: collapse;
+  width: 100%; /* Table takes full width of its container */
+  margin: 0; /* Reset margin as container handles it */
+}
+
+th, td {
+  border: 1px solid #e0e0e0; /* Lighter border */
+  padding: 12px 15px; /* Increased padding */
+  text-align: left;
+  font-size: 0.95em;
+}
+
+th {
+  background-color: #f0f2f5; /* Light background for header */
+  color: #333;
+  font-weight: 600; /* Bolder header text */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9; /* Zebra striping */
+}
+tbody tr:hover {
+  background-color: #e9eff5; /* Hover effect */
+}
+
+/* --- Loading and Error Messages --- */
+.loading-spinner-container {
+    text-align: center;
+    padding: 50px;
+    color: #555;
+}
+.loading-spinner {
+    border: 5px solid #f0f0f0; /* Lighter grey */
+    border-top: 5px solid #007bff; /* Blue */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px auto; /* Center spinner */
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.error-message, 
+#leaderboardTableContainer p[style*="text-align:center"] /* For "no data" messages */
+{
+    text-align: center;
+    color: #d9534f; /* Red for errors */
+    padding: 30px 20px;
+    font-size: 1.1em;
+    background-color: #fdf7f7;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+    margin: 20px;
+}
+#leaderboardTableContainer p[style*="text-align:center"] { /* Style "no data" differently */
+    color: #555;
+    background-color: #f9f9f9;
+    border-color: #eee;
+}
+
+
+/* --- Responsive Navigation (from your original CSS) --- */
+@media (max-width: 952px) {
+    label.logo {
+        font-size: 28px; /* Adjusted */
+        padding-left: 40px; /* Adjusted */
+    }
+    nav ul li a {
+        font-size: 15px; /* Adjusted */
+    }
+}
+
+@media (max-width: 858px) {
+    .checkbtn {
+        display: block;
+    }
+    nav ul { /* Target the ul specifically inside nav */
+        position: fixed;
+        width: 100%;
+        height: calc(100vh - 80px); /* Full height minus nav */
+        background: #2c3e50; /* Dark background for mobile menu */
+        top: 80px; /* Position below nav */
+        left: -100%; /* Off-screen initially */
+        text-align: center;
+        transition: all .5s ease; /* Smoother transition */
+        padding-top: 20px;
+    }
+    nav ul li {
+        display: block;
+        margin: 30px 0; /* Adjusted margin */
+        line-height: normal; /* Reset line height */
+    }
+    nav ul li a {
+        font-size: 18px; /* Adjusted font size */
+    }
+    nav ul li a:hover,
+    nav ul li a.active { /* Ensure mobile hover/active is distinct */
+        background: none; /* Remove background */
+        color: #00acee; /* Lighter blue for hover */
+    }
+    #check:checked ~ ul {
+        left: 0; /* Slide in menu */
+    }
+}

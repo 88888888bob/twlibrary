@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Jaro:opsz@6..72&display=swap');
+
+/*  Remove this block - it creates HUGE margins */
+/*
+*
+{
+	margin: 200 px;
+	padding: 5px;
+	box-sizing: border-box;
+	font-family: "Jaro", sans-serif;
+}
+*/
+
+
+body { /* Apply basic styling to the body */
+    font-family: "Jaro", sans-serif;
+    margin: 0; /* Reset default margins */
+    padding: 0; /* Reset default padding */
+    box-sizing: border-box;
+}
+
+.submit {
+  margin: 20px;
+  padding: 5px;
+  transition-duration: 0.4s;
+  border-radius: 4px;
+}
+
+.submit:hover {
+  background-color: #04AA6D; /* Green */
+  color: white;
+}
+
+.logo {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+.form {
+  transition-duration: 0.4s;
+}
+
+.form:hover {
+  background-color: #04AA6D; /* Green */
+  color: white;
+}

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Library Login/Signup</title>
+<!-- <link rel="stylesheet" type="text/css" href="Signin.css"> --> <!-- 如果你想保持外部链接，可以取消这行注释，并删除下面的<style>块中的对应内容 -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Jaro:opsz@6..72&display=swap');
+
+/* Styles from your signin.css */
+body {
+    font-family: "Jaro", sans-serif; /* Your font */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* My previous background styles */
+    background-image: url(old-books-436498_1280.jpg); /* 确保图片路径正确 */
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    padding-top: 120px; /* 为绝对定位的 logo 和标题留出空间 */
+}
+
+.submit { /* Your .submit styles */
+  margin: 20px auto 0 auto; /* 居中按钮，顶部有一些间距 */
+  padding: 10px 15px; /* 调整 padding 使其更像标准按钮 */
+  transition-duration: 0.4s;
+  border-radius: 4px;
+  border: none; /* 添加以移除默认边框 */
+  background-color: #5cb85c; /* My default green */
+  color: white;
+  display: block; /* 使其成为块级元素以应用 auto margin */
+  width: calc(100% - 40px); /* 宽度适应容器，并考虑左右 margin */
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.submit:hover { /* Your .submit:hover styles */
+  background-color: #04AA6D; /* Green from your CSS */
+  color: white;
+}
+
+.logo { /* Your .logo styles */
+  position: absolute;
+  top: 10px;  /* 稍微向下一点 */
+  left: 10px; /* 稍微向右一点 */
+  height: 100px; /* 保持 HTML 中的定义 */
+  width: 100px;  /* 保持 HTML 中的定义 */
+}
+
+.form { /* Your .form class styles (applied to label and input) */
+  transition-duration: 0.4s;
+}
+
+.form:hover { /* Your .form:hover styles */
+  /* background-color: #04AA6D;  // 考虑是否对 label 和 input 都应用这个背景 */
+  /* color: white; // 白色文字在绿色背景上可能可以，但对于 input，这会隐藏占位符 */
+  /* 对于 input，可能只需要边框高亮等效果 */
+}
+
+/* My previous layout styles (merged and adjusted) */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Changed from flex-start to center if forms have similar height */
+    flex-wrap: wrap; /* 允许换行，以防屏幕过小 */
+}
+
+.login-form, .signup-form {
+    width: 320px;
+    padding: 30px;
+    margin: 20px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.65); /* 稍微加深背景以提高对比度 */
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+h1 { /* Adjusted for logo */
+    color: #F8F8FF;
+    text-align: center;
+    font-size: 24px; /* 调整字体大小 */
+    margin-bottom: 30px; /* 在标题和容器之间增加间距 */
+    padding: 0 20px; /* 增加左右内边距，防止文字紧贴边缘 */
+}
+h2 {
+    color: #F8F8FF;
+    text-align: center;
+    margin-top: 0; /* 移除 h2 的顶部外边距，使其更紧凑 */
+    margin-bottom: 20px;
+}
+
+label.form { /* 特别为 label 设置样式，使其与 input 区分 */
+    color: #F8F8FF;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+label.form:hover {
+    color: #04AA6D; /* 仅改变文字颜色，而不是背景 */
+}
+
+
+input.form { /* 特别为 input 设置样式 */
+    width: calc(100% - 22px);
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: #fff; /* 确保输入框背景是白色 */
+    color: #333; /* 输入文字颜色 */
+}
+input.form:hover {
+    border-color: #04AA6D; /* 悬停时高亮边框 */
+}
+input.form:focus { /* 输入框获取焦点时的样式 */
+    outline: none;
+    border-color: #04AA6D;
+    box-shadow: 0 0 5px rgba(4, 170, 109, 0.5);
+}
+
+</style>
+</head>
+<body>
+<!-- 页面顶部添加一个空 div 用于 logo 的相对定位，或者直接调整 body padding -->
+<img src="school_logo.jpg" height="100" width="100" class="logo" alt="School Logo" />
+<h1>TONGWEN SCHOOL JIAXING MIDDLE AND HIGH SCHOOL DIVISION LIBRARY MANAGEMENT SYSTEM</h1>
+
+<div class="container">
+
+  <!-- Login Form -->
+  <div class="login-form">
+    <h2>LOGIN</h2>
+    <form id="loginForm" onsubmit="login(event)">
+      <label for="login_email" class="form">Email:</label>
+      <input type="email" id="login_email" name="login_email" class="form" placeholder="e.g abc@123.com" required>
+      <label for="login_pwd" class="form">Password:</label>
+      <input type="password" id="login_pwd" name="login_pwd" class="form" placeholder="e.g your_password" required>
+      <button type="submit" class="submit">Login</button>
+    </form>
+  </div>
+
+  <!-- Signup Form -->
+  <div class="signup-form">
+    <h2>SIGNUP</h2>
+    <form id="signupForm" onsubmit="signup(event)">
+      <label for="username" class="form">Username:</label>
+      <input type="text" id="username" name="username" class="form" placeholder="e.g ava11" required>
+      <label for="email" class="form">Email:</label>
+      <input type="email" id="email" name="email" class="form" placeholder="e.g abc@123.com" required>
+      <label for="pwd" class="form">Password:</label>
+      <input type="password" id="pwd" name="pwd" class="form" placeholder="e.g 123_i_luv_u" required>
+      <button type="submit" class="submit">Sign Up</button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  const API_BASE_URL = 'https://twapi.bob666.eu.org'; // 你的 Worker API 基础 URL
+
+  async function signup(event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('pwd').value;
+
+    const data = { username: username, email: email, password: password };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert(result.message || 'Registration successful!');
+        document.getElementById('signupForm').reset();
+      } else {
+        alert(result.message || 'Signup failed.');
+      }
+    } catch (error) {
+      console.error('Error during signup:', error);
+      alert('An error occurred during signup. Please check the console.');
+    }
+  }
+
+  async function login(event) {
+    event.preventDefault();
+    const email = document.getElementById('login_email').value;
+    const password = document.getElementById('login_pwd').value;
+
+    const data = { email: email, password: password };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert(result.message || 'Login successful!');
+        if (result.user && result.user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+      } else {
+        alert(result.message || 'Login failed. Check credentials.');
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      alert('An error occurred during login. Please check the console.');
+    }
+  }
+</script>
+
+</body>
+</html>
