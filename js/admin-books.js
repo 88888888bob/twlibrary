@@ -12,7 +12,6 @@ const bookCategories = [ // Should ideally be fetched from API
 ];
 
 
-/
 // --- Navigation entry points ---
 function showBookList() { loadBookListLogic(); }
 function showAddBookForm() { renderAddBookForm(); }
