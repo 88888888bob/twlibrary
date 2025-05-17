@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="sidebar" id="sidebar">
-        <div class="logo">Back end Management后台管理</div>
+        <div class="logo">Back end Management 后台管理</div>
         <ul>
             <li><a href="#" data-module="dashboard" data-action="showDashboard"><i class="fas fa-tachometer-alt"></i> Dashboard 仪表盘</a></li>
             <li>
@@ -32,6 +32,7 @@
             <li>
                 <a href="#" data-module="users" data-action="showUserList"><i class="fas fa-users"></i>User Configuration 用户管理</a>
             </li>
+            <li><a href="#" data-module="settings" data-action="showSiteSettingsPage"><i class="fas fa-cogs"></i> 网站设置</a></li>
             <li><a href="#" data-action="logoutUser"><i class="fas fa-sign-out-alt"></i>Logout 退出</a></li> <!-- Changed action -->
         </ul>
     </div>
@@ -71,12 +72,14 @@
     </div>
 
     <!-- JavaScript Files -->
-    <script src="js/admin-modals.js"></script>   <!-- Modal logic first -->
-    <script src="js/admin-utils.js"></script>    <!-- Utilities (API calls, loading) -->
+    
+    <script src="js/admin-utils.js"></script>    <!-- Utilities (API calls, loading, escapeHtml) -->
+    <script src="js/admin-modals.js"></script>   <!-- Modal logic -->
     <script src="js/admin-dashboard.js"></script>
     <script src="js/admin-books.js"></script>
     <script src="js/admin-borrow.js"></script>
     <script src="js/admin-users.js"></script>
+    <script src="js/admin-settings.js"></script> <!-- Site Settings module -->
     <script src="js/admin-main.js"></script>     <!-- Main control logic last -->
 </body>
 </html>
