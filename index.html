@@ -1,7 +1,10 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="main page 2.css" >
-    <title> TONGWEN SCHOOL Library </title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main_page_2.css"> <!-- 确保 CSS 文件名正确 -->
+    <title>TONGWEN SCHOOL Library</title>
     <script src="https://kit.fontawesome.com/f16ed52059.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -12,21 +15,29 @@
         </label>
         <label class="logo">TONGWEN SCHOOL</label>
         <ul>
-            <li><a href="#">Home</a></li>
+            <li><a href="index.html" class="active">Home</a></li> <!-- 假设这是首页，添加 active 类 -->
             <li><a href="sign_up_login_page.html">Library Management Login</a></li>
             <li><a href="#">Communication Blog</a></li>
             <li><a href="#">About Us</a></li>
             <li><a href="#">Contact</a></li>
         </ul>
     </nav>
+
     <section>
-        <div class="announcement-bar">
-            <p>Fellow students and staff of TONGWEN SCHOOL JIAXING, we proudly announce that the new board for the reading activity has been successfully added and updated. For further details, click the link <a href="board table.html">here!</a> <br> 青鸟同文实验学校的各位同学和工作人员，我们荣幸地宣布，读书活动的新板块已成功添加并更新。欲了解更多详情，请点击<a href="board table.html">链接！</a></p>
+        <!-- 公告栏容器，JavaScript 将填充这里的内容 -->
+        <div class="announcement-bar-container" id="dynamicAnnouncementBarContainer">
+            <p><i>正在加载最新消息...</i></p> <!-- 初始占位符 -->
+        </div>
+
+        <!-- 其他首页内容可以放在这里 -->
+        <div style="padding: 20px; text-align: center;">
+            <h1>欢迎来到同文学校图书馆</h1>
+            <p>探索知识的海洋，开启智慧的航程。</p>
+            <!-- 更多内容 -->
         </div>
     </section>
-    <script>
-        // Add JavaScript code here if needed
-        // 一个普通的js
-    </script>
+
+    <!-- 在 body 底部引入分离的 JS 文件 -->
+    <script src="js/main-page.js"></script> 
 </body>
 </html>
