@@ -17,14 +17,13 @@ async function loadAndRenderSiteSettings() {
     if (typeof showLoading === 'function') showLoading();
     else if (contentArea) contentArea.innerHTML = "<p>正在加载...</p>";
 
-    // Ensure escapeHtml is available, provide a fallback if not (should not happen if utils.js is loaded)
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => {
         console.warn("escapeHtml function not found, using basic text passthrough.");
         return text;
     };
 
     try {
-        const data = await apiCall('/api/admin/settings'); // Fetch all settings
+        const data = await apiCall('/api/admin/settings');
         
         if (!contentArea) {
             console.error("CRITICAL: contentArea not found for rendering site settings.");
@@ -33,10 +32,10 @@ async function loadAndRenderSiteSettings() {
         }
 
         if (data.success && data.settings) {
-            currentSiteSettings = {}; // Reset local cache
+            currentSiteSettings = {};
             let settingsHtml = `
                 <div class="content-section">
-                    <h2><i class="fas fa-cogs"></i> 网站设置</h2>
+                    <h2><i class="fas fa-cogs"></i>Website Settings 网站设置</h2>
                     <form id="siteSettingsForm" onsubmit="submitSiteSettings(event)">`;
             
             const usageGuideHtml = `
@@ -47,8 +46,8 @@ async function loadAndRenderSiteSettings() {
                         <li><strong>字号/颜色:</strong> 通过下拉菜单选择不同的字号和颜色。</li>
                         <li><strong>对齐/列表:</strong> 使用对齐和列表按钮调整文本布局。</li>
                         <li><strong>链接:</strong> 选中文字后点击链接图标创建超链接。</li>
-                        <li><strong>图片/代码/公式:</strong> 通过对应图标插入网络图片、代码块或数学公式。</li>
-                        <li><strong>清除格式:</strong> 移除所选文字的所有样式。</li>
+                        // <li><strong>图片/代码/公式:</strong> 通过对应图标插入网络图片、代码块或数学公式。</li>
+                        // <li><strong>清除格式:</strong> 移除所选文字的所有样式。</li>
                     </ul>
                 </div>`;
 
@@ -57,33 +56,49 @@ async function loadAndRenderSiteSettings() {
             }
 
             data.settings.forEach(setting => {
-                currentSiteSettings[setting.setting_key] = setting; // Cache for description etc.
+                currentSiteSettings[setting.setting_key] = setting;
                 const settingKeyEsc = esc(setting.setting_key);
-                const descriptionEsc = esc(setting.description || setting.setting_key);
-                
+                let descriptionHtml = esc(setting.description || setting.setting_key); // 默认使用英文描述
+
+                // 为特定的 setting_key 添加中文翻译
+                if (setting.setting_key === 'announcement_bar_html') {
+                    if (setting.description && setting.description.toLowerCase().includes('homepage announcement bar content')) {
+                         descriptionHtml = `
+                            ${esc(setting.description)}<br>
+                            <span style="font-weight:normal; color:#555;">首页公告栏内容 (允许 HTML)</span>
+                         `;
+                    } else { // 如果描述不是预期的，则只添加一个通用的中文
+                        descriptionHtml += `<br><span style="font-weight:normal; color:#555;">首页公告栏内容</span>`;
+                    }
+                }
+                // 你可以为其他 setting_key 添加类似的翻译逻辑
+                // else if (setting.setting_key === 'another_key') {
+                //     descriptionHtml = `${esc(setting.description)}<br><span style="font-weight:normal; color:#555;">另一个设置的中文描述</span>`;
+                // }
+
+
                 let fieldHtml = '';
+                const labelHtml = `
+                    <label for="setting_${settingKeyEsc}">${descriptionHtml} 
+                        (<small>Key: <code>${settingKeyEsc}</code></small>):
+                    </label>`;
+
                 if (setting.setting_key === 'announcement_bar_html') {
                     fieldHtml = `
-                        ${usageGuideHtml}
+                        ${(setting.setting_key === 'announcement_bar_html' ? usageGuideHtml : '')}
                         <div class="form-group-editor-wrapper">
-                            <label for="quill_editor_${settingKeyEsc}">${descriptionEsc} 
-                                (<small>Key: <code>${settingKeyEsc}</code></small>):
-                            </label>
+                            ${labelHtml}
                             <div id="quill_editor_${settingKeyEsc}" class="quill-editor-instance" style="min-height: 150px; border: 1px solid #ccc; border-radius: 4px;"></div>
                             <input type="hidden" id="setting_${settingKeyEsc}" name="${settingKeyEsc}">
                         </div>`;
                 } else if (String(setting.setting_key).endsWith('_json')) {
                     fieldHtml = `
-                        <label for="setting_${settingKeyEsc}">${descriptionEsc} 
-                            (<small>Key: <code>${settingKeyEsc}</code></small>):
-                        </label>
+                        ${labelHtml}
                         <textarea id="setting_${settingKeyEsc}" name="${settingKeyEsc}" class="form-control" rows="8" style="font-family: monospace;">${esc(setting.setting_value)}</textarea>
                         <small class="form-text text-muted">此内容应为有效的 JSON 字符串。</small>`;
                 } else { // Default to text input
                     fieldHtml = `
-                        <label for="setting_${settingKeyEsc}">${descriptionEsc} 
-                            (<small>Key: <code>${settingKeyEsc}</code></small>):
-                        </label>
+                        ${labelHtml}
                         <input type="text" id="setting_${settingKeyEsc}" name="${settingKeyEsc}" value="${esc(setting.setting_value)}" class="form-control">`;
                 }
 
@@ -92,7 +107,7 @@ async function loadAndRenderSiteSettings() {
                         ${fieldHtml}
                         <small class="form-text text-muted">最后更新：${new Date(setting.last_updated).toLocaleDateString()} ${new Date(setting.last_updated).toLocaleTimeString()}</small>
                     </div>
-                    ${data.settings.length > 1 ? '<hr style="border-top: 1px dashed #eee; margin: 20px 0;">' : ''}`; // Add HR if more than one setting
+                    ${data.settings.indexOf(setting) < data.settings.length - 1 ? '<hr style="border-top: 1px dashed #eee; margin: 20px 0;">' : ''}`;
             });
 
             if (data.settings.length > 0) {
@@ -105,7 +120,6 @@ async function loadAndRenderSiteSettings() {
             
             contentArea.innerHTML = settingsHtml;
                 
-            // Initialize Quill editor(s) using the manager AFTER HTML is in DOM
             data.settings.forEach(setting => {
                 if (setting.setting_key === 'announcement_bar_html') {
                     const editorContainerSelector = `#quill_editor_${esc(setting.setting_key)}`;
@@ -115,14 +129,13 @@ async function loadAndRenderSiteSettings() {
                             editorContainerSelector, 
                             hiddenInputSelector, 
                             setting.setting_value, 
-                            'simple', // Toolbar config key from quill-manager.js
+                            'simple', 
                             '输入公告 HTML 内容...'
                         );
                     } else {
                         console.error("initializeQuillEditor function not found. Quill manager might not be loaded.");
                     }
                 }
-                // Add more 'else if' blocks here if other settings need Quill with different configs
             });
 
         } else {
