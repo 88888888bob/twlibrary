@@ -172,3 +172,12 @@ function navigateToUserManagement() { dispatchAction('showUserList'); }
 
 // Site Settings
 function navigateToSiteSettings() { dispatchAction('showSiteSettingsPage'); } // Assuming showSiteSettingsPage is global
+
+
+// Blog Management Navigation
+function navigateToBlogPostsList() { dispatchAction('showBlogPostsList'); }
+function navigateToBlogPostForm(postId = null) { // postId 为 null 表示新建，否则为编辑
+    dispatchAction('showBlogPostForm', { postId: postId }); 
+}
+function navigateToBlogTopicsAdmin() { dispatchAction('showBlogTopicsAdmin'); }
+// function navigateToBlogCommentsAdmin() { dispatchAction('showBlogCommentsAdmin'); } // 未来

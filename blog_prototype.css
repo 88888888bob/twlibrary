@@ -1,0 +1,401 @@
+/* blog_prototype.css */
+/* --- 基本重置和全局样式 --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    background-color: #f9f9f9; /* 页面背景色 */
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* --- 导航栏样式 (基于通用模式) --- */
+.main-nav {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+}
+.logo {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333;
+}
+.nav-links {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+.nav-links li {
+    margin-left: 25px;
+}
+.nav-links a {
+    color: #555;
+    font-weight: 500;
+    padding: 5px 0;
+    position: relative;
+}
+.nav-links a.active,
+.nav-links a:hover {
+    color: #007bff;
+}
+.nav-links a.active::after,
+.nav-links a:hover::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #007bff;
+}
+.menu-toggle {
+    display: none; /* 移动端显示 */
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+/* --- 博客头部 --- */
+.blog-header {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: #eef4f7; /* 淡蓝色背景 */
+    margin-bottom: 30px;
+    border-radius: 8px;
+}
+.blog-header h1 {
+    font-size: 2.8em;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+.blog-header p {
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* --- 主内容区布局 --- */
+.blog-main-content {
+    display: flex;
+    gap: 30px;
+}
+.posts-section {
+    flex: 3; /* 文章区占 3 份 */
+}
+.sidebar-section {
+    flex: 1; /* 侧边栏占 1 份 */
+    min-width: 280px; /* 侧边栏最小宽度 */
+}
+
+/* --- 文章卡片样式 --- */
+.post-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    overflow: hidden; /* 确保图片圆角生效 */
+    display: flex; /* 用于小图片在左，内容在右的布局 */
+    flex-direction: column; /* 默认是纵向排列 */
+}
+.post-card.featured { /* 焦点文章样式 */
+    flex-direction: column;
+}
+.post-card:not(.featured) {
+    flex-direction: row; /* 水平排列，图片在左 */
+    align-items: flex-start; /* 顶部对齐 */
+}
+
+.post-image { /* 焦点文章大图 */
+    width: 100%;
+    height: auto; /* 或固定高度，例如 300px，然后 object-fit: cover; */
+    max-height: 400px;
+    object-fit: cover;
+}
+.post-image-small { /* 列表文章小图 */
+    width: 200px; /* 固定宽度 */
+    height: 150px; /* 固定高度 */
+    object-fit: cover;
+    margin-right: 20px;
+    border-radius: 8px 0 0 8px; /* 左侧圆角 */
+}
+.post-card:not(.featured) .post-content {
+    padding: 20px;
+    flex: 1; /* 内容区占据剩余空间 */
+}
+.post-card.featured .post-content {
+    padding: 25px;
+}
+
+.post-meta {
+    font-size: 0.85em;
+    color: #777;
+    margin-bottom: 10px;
+}
+.post-meta span:not(:last-child)::after {
+    content: '·';
+    margin: 0 8px;
+}
+.post-category {
+    font-weight: 500;
+    color: #007bff;
+}
+.post-title {
+    font-size: 1.8em; /* 焦点文章标题大一些 */
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.post-card:not(.featured) .post-title {
+    font-size: 1.4em; /* 列表文章标题 */
+}
+.post-title a {
+    color: #333;
+}
+.post-title a:hover {
+    color: #0056b3;
+    text-decoration: none;
+}
+.post-excerpt {
+    color: #555;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    line-height: 1.7;
+}
+.read-more {
+    display: inline-block;
+    font-weight: bold;
+    color: #007bff;
+}
+.post-actions {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 15px;
+}
+.post-actions .action-link {
+    margin-right: 15px;
+    color: #777;
+}
+.post-actions .action-link i {
+    margin-right: 5px;
+}
+
+
+.section-title { /* "最新发布" 等标题 */
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+    color: #333;
+}
+
+/* --- 分页样式 --- */
+.pagination {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+.page-number, .page-next, .page-prev {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 4px;
+    border: 1px solid #ddd;
+    color: #555;
+    border-radius: 4px;
+}
+.page-number.current,
+.page-number:hover, .page-next:hover, .page-prev:hover {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+    text-decoration: none;
+}
+
+/* --- 侧边栏小部件样式 --- */
+.widget {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+}
+.widget-title {
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+.widget-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.widget-list li {
+    margin-bottom: 10px;
+}
+.widget-list li a {
+    color: #555;
+}
+.widget-list li a:hover {
+    color: #007bff;
+}
+.post-meta-small {
+    font-size: 0.8em;
+    color: #888;
+    display: block;
+    margin-top: 3px;
+}
+
+/* 搜索框 */
+.search-form {
+    display: flex;
+}
+.search-form input[type="search"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    outline: none;
+}
+.search-form button {
+    padding: 10px 12px;
+    border: 1px solid #007bff;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 0 4px 4px 0;
+}
+.search-form button:hover {
+    background-color: #0056b3;
+}
+
+/* 标签云 */
+.tag-cloud .tag {
+    display: inline-block;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 5px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+.tag-cloud .tag:hover {
+    background-color: #007bff;
+    color: #fff;
+    text-decoration: none;
+}
+
+/* CTA Widget */
+.cta-widget .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: 500;
+}
+.cta-widget .btn-primary {
+    background-color: #28a745; /* 绿色按钮 */
+    color: #fff;
+}
+.cta-widget .btn-primary:hover {
+    background-color: #218838;
+    text-decoration: none;
+}
+
+
+/* --- 页脚样式 --- */
+.main-footer {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: #343a40; /* 深色页脚 */
+    color: #adb5bd;
+    margin-top: 40px;
+}
+
+/* --- 响应式导航 (基本) --- */
+@media (max-width: 850px) {
+    .nav-links {
+        display: none; /* 隐藏桌面导航链接 */
+        flex-direction: column;
+        position: absolute;
+        top: 70px; /* 导航栏高度 */
+        left: 0;
+        width: 100%;
+        background-color: #fff;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .nav-links.active {
+        display: flex; /* 点击切换按钮后显示 */
+    }
+    .nav-links li {
+        margin: 0;
+        text-align: center;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .nav-links li:last-child {
+        border-bottom: none;
+    }
+    .nav-links a {
+        display: block;
+        padding: 15px;
+    }
+    .nav-links a.active::after,
+    .nav-links a:hover::after {
+        display: none; /* 移除移动端的下划线 */
+    }
+    .menu-toggle {
+        display: block; /* 显示汉堡菜单按钮 */
+    }
+
+    .blog-main-content {
+        flex-direction: column; /* 在小屏幕上堆叠 */
+    }
+    .sidebar-section {
+        min-width: auto; /* 移除最小宽度 */
+        margin-top: 30px;
+    }
+    .post-card:not(.featured) {
+        flex-direction: column; /* 卡片也堆叠 */
+    }
+    .post-image-small {
+        width: 100%; /* 图片占满卡片宽度 */
+        height: 200px; /* 固定高度 */
+        margin-right: 0;
+        margin-bottom: 15px;
+        border-radius: 8px 8px 0 0; /* 顶部圆角 */
+    }
+    .post-card:not(.featured) .post-content {
+        padding: 20px; /* 保持内边距 */
+    }
+}

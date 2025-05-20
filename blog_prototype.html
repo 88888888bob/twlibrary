@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交流博客 - 图书馆</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="blog_prototype.css"> <!-- 我们将创建这个 CSS 文件 -->
+</head>
+<body>
+    <!-- 1. 导航栏 (假设与你的首页导航类似) -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="index.html" class="logo">TONGWEN SCHOOL LIBRARY</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog_prototype.html" class="active">交流博客</a></li>
+                <li><a href="board_table.html">排行榜</a></li>
+                <li><a href="sign_up_login_page.html">登录/注册</a></li>
+            </ul>
+            <div class="menu-toggle"><i class="fas fa-bars"></i></div>
+        </div>
+    </nav>
+
+    <!-- 页面主容器 -->
+    <div class="page-container">
+        <header class="blog-header">
+            <h1>书海拾贝 & 智慧碰撞</h1>
+            <p>分享阅读感悟，交流思想火花</p>
+        </header>
+
+        <!-- 2. 博客主区域 -->
+        <main class="blog-main-content">
+            <!-- 左侧：文章列表 -->
+            <section class="posts-section">
+                <!-- 2.1 焦点文章/置顶 (可选) -->
+                <article class="post-card featured">
+                    <img src="https://via.placeholder.com/800x400?text=Featured+Article+Image" alt="焦点文章图片" class="post-image">
+                    <div class="post-content">
+                        <div class="post-meta">
+                            <span class="post-category">书评</span>
+                            <span class="post-date">2024 年 5 月 20 日</span>
+                        </div>
+                        <h2 class="post-title"><a href="blog_post_detail.html">《三体》：一部震撼心灵的科幻史诗</a></h2>
+                        <p class="post-excerpt">刘慈欣的《三体》不仅仅是一部科幻小说，它更像是一面镜子，映照出人类文明在宇宙尺度下的渺小与伟大...</p>
+                        <a href="blog_post_detail.html" class="read-more">阅读全文 →</a>
+                    </div>
+                </article>
+
+                <h3 class="section-title">最新发布</h3>
+                <!-- 2.2 文章列表 (示例卡片) -->
+                <article class="post-card">
+                    <img src="https://via.placeholder.com/300x200?text=Article+Image+1" alt="文章图片1" class="post-image-small">
+                    <div class="post-content">
+                        <div class="post-meta">
+                            <span class="post-category">活动回顾</span>
+                            <span class="post-date">2024 年 5 月 18 日</span>
+                            <span class="post-author">作者：图书馆小助手</span>
+                        </div>
+                        <h2 class="post-title"><a href="blog_post_detail.html">“与经典同行”读书分享会圆满结束</a></h2>
+                        <p class="post-excerpt">上周六，我校图书馆成功举办了“与经典同行”读书分享会，同学们热情参与，分享了各自的阅读心得...</p>
+                        <div class="post-actions">
+                            <a href="blog_post_detail.html#comments" class="action-link"><i class="fas fa-comments"></i> 12 条评论</a>
+                            <span class="action-link"><i class="fas fa-eye"></i> 156 次阅读</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="post-card">
+                     <img src="https://via.placeholder.com/300x200?text=Article+Image+2" alt="文章图片2" class="post-image-small">
+                    <div class="post-content">
+                        <div class="post-meta">
+                            <span class="post-category">新书推荐</span>
+                            <span class="post-date">2024 年 5 月 15 日</span>
+                        </div>
+                        <h2 class="post-title"><a href="blog_post_detail.html">探索 AI 的未来：《AI 未来进行式》</a></h2>
+                        <p class="post-excerpt">本周新到好书《AI 未来进行式》，带你深入了解人工智能的最新进展与伦理思考...</p>
+                         <div class="post-actions">
+                            <a href="blog_post_detail.html#comments" class="action-link"><i class="fas fa-comments"></i> 5 条评论</a>
+                            <span class="action-link"><i class="fas fa-eye"></i> 89 次阅读</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- 分页 -->
+                <nav class="pagination">
+                    <a href="#" class="page-number current">1</a>
+                    <a href="#" class="page-number">2</a>
+                    <a href="#" class="page-number">3</a>
+                    <a href="#" class="page-next">»</a>
+                </nav>
+            </section>
+
+            <!-- 右侧：侧边栏 -->
+            <aside class="sidebar-section">
+                <div class="widget search-widget">
+                    <h4 class="widget-title">搜索博文</h4>
+                    <form action="#" method="get" class="search-form">
+                        <input type="search" name="q" placeholder="输入关键词...">
+                        <button type="submit"><i class="fas fa-search"></i></button>
+                    </form>
+                </div>
+
+                <div class="widget categories-widget">
+                    <h4 class="widget-title">分类目录</h4>
+                    <ul class="widget-list">
+                        <li><a href="#">新书推荐 (12)</a></li>
+                        <li><a href="#">书评分享 (25)</a></li>
+                        <li><a href="#">活动资讯 (8)</a></li>
+                        <li><a href="#">阅读技巧 (5)</a></li>
+                        <li><a href="#">作者访谈 (3)</a></li>
+                    </ul>
+                </div>
+
+                <div class="widget recent-posts-widget">
+                    <h4 class="widget-title">近期热门</h4>
+                    <ul class="widget-list">
+                        <li><a href="#">如何培养深度阅读习惯</a> <span class="post-meta-small">2024-05-10</span></li>
+                        <li><a href="#">科幻小说的黄金时代</a> <span class="post-meta-small">2024-05-05</span></li>
+                        <li><a href="#">图书馆数字资源使用指南</a> <span class="post-meta-small">2024-04-28</span></li>
+                    </ul>
+                </div>
+
+                <div class="widget tags-widget">
+                    <h4 class="widget-title">热门标签</h4>
+                    <div class="tag-cloud">
+                        <a href="#" class="tag">科幻</a> <a href="#" class="tag">历史</a>
+                        <a href="#" class="tag">经典</a> <a href="#" class="tag">AI</a>
+                        <a href="#" class="tag">儿童文学</a> <a href="#" class="tag">学习方法</a>
+                        <a href="#" class="tag">推理</a>
+                    </div>
+                </div>
+                 <div class="widget cta-widget">
+                    <h4 class="widget-title">参与讨论</h4>
+                    <p>有好的想法或书评？</p>
+                    <a href="blog_submit_post.html" class="btn btn-primary">发布我的文章</a>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- 4. 页脚 (假设与你的首页页脚类似) -->
+    <footer class="main-footer">
+        <p>© 2024 TONGWEN SCHOOL LIBRARY. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        // 简单的移动端菜单切换 (示例)
+        const menuToggle = document.querySelector('.menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+        if (menuToggle && navLinks) {
+            menuToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+            });
+        }
+    </script>
+</body>
+</html>
