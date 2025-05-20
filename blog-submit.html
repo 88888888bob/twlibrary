@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>撰写文章 - 同文学校图书馆</title> <!-- Title 会动态更新 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Quill CSS -->
+    <link href="https://cdn.quilljs.com/2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <!-- KaTeX CSS (if editor supports formula) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
+    <!-- <link rel="stylesheet" href="main_page_2.css"> -->
+    <link rel="stylesheet" href="css/blog_styles.css"> <!-- Shared blog styles -->
+    <link rel="stylesheet" href="css/blog_form_styles.css"> <!-- Specific for forms -->
+    <style> /* 临时 */
+        .form-container { max-width: 900px; margin: 30px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-container h2 { text-align: center; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-group input[type="text"], .form-group input[type="url"], .form-group textarea, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.95rem;
+        }
+        .form-group textarea { min-height: 80px; }
+        .required-star { color: red; margin-left: 3px; }
+        .form-row { display: flex; gap: 20px; }
+        .form-row .form-group { flex: 1; }
+        .topic-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 4px; }
+        .topic-checkbox label { margin-right: 15px; font-weight: normal; display:flex; align-items:center;}
+        .topic-checkbox input { margin-right: 5px; }
+        .form-actions { text-align: right; margin-top: 30px; }
+        .btn { padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; }
+        .btn-submit { background-color: #28a745; color: white; } .btn-submit:hover { background-color: #218838; }
+        .btn-cancel { background-color: #6c757d; color: white; margin-left:10px; } .btn-cancel:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 (复用) -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="index.html" class="logo">TONGWEN SCHOOL LIBRARY</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog.html">交流博客</a></li>
+                <li><a href="board_table.html">排行榜</a></li>
+                <li><a href="sign_up_login_page.html" id="navLoginLinkSubmit">登录/注册</a></li>
+            </ul>
+            <div class="menu-toggle"><i class="fas fa-bars"></i></div>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="form-container" id="blogSubmitFormContainer">
+            <h2 id="formPageTitle"><i class="fas fa-edit"></i> 撰写新文章</h2>
+            <form id="blogPostUserForm" onsubmit="submitUserBlogPostForm(event)">
+                <input type="hidden" name="postId" id="userPostIdInput" value="">
+                
+                <div class="form-group">
+                    <label for="userPostTitle">标题<span class="required-star">*</span>:</label>
+                    <input type="text" id="userPostTitle" name="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="userPostQuillEditor">内容<span class="required-star">*</span>:</label>
+                    <div id="userPostQuillEditor" class="quill-editor-instance"></div> <!-- Style min-height with CSS -->
+                    <input type="hidden" id="userPostContentHidden" name="content">
+                </div>
+
+                <div class="form-group">
+                    <label for="userPostExcerpt">摘要 (可选):</label>
+                    <textarea id="userPostExcerpt" name="excerpt" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userPostBookIsbn">关联书籍 ISBN (可选):</label>
+                        <div style="display:flex;">
+                            <input type="text" id="userPostBookIsbn" name="book_isbn" placeholder="输入ISBN或书名搜索">
+                            <button type="button" class="btn btn-search btn-sm" onclick="userSearchBookForPost()" style="margin-left:5px;"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div id="userBookSearchResult" style="margin-top:5px; font-size:0.9em;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPostFeaturedImageUrl">封面图片 URL (可选):</label>
+                        <input type="url" id="userPostFeaturedImageUrl" name="featured_image_url" placeholder="https://example.com/image.jpg">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>选择话题 (可选):</label>
+                    <div class="topic-checkbox-group" id="userTopicSelection">
+                        <p>正在加载话题...</p>
+                    </div>
+                </div>
+                
+                <!-- 用户通常不能直接选择已发布，状态由后端根据审核设置决定或提交为 pending_review -->
+                <input type="hidden" name="status" id="userPostStatusInput" value="pending_review"> <!-- Or 'draft' -->
+
+
+                <div class="form-row">
+                     <div class="form-group">
+                        <label for="userPostVisibility">可见性：</label>
+                        <select id="userPostVisibility" name="visibility">
+                            <option value="public" selected>公开 (所有人可见)</option>
+                            <option value="members_only">仅登录用户可见</option>
+                            <option value="unlisted">不公开列出 (知道链接可访问)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPostAllowComments">允许评论：</label>
+                        <select id="userPostAllowComments" name="allow_comments">
+                            <option value="true" selected>是</option>
+                            <option value="false">否</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="saveDraft()" id="saveDraftBtn" style="margin-right:10px;"><i class="fas fa-save"></i> 保存草稿</button>
+                    <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> <span id="submitBtnText">提交审核/发布</span></button>
+                    <a href="blog.html" class="btn btn-cancel">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <p>© <span id="currentYearSubmit"></span> TONGWEN SCHOOL LIBRARY. All Rights Reserved.</p>
+    </footer>
+
+    <!-- Quill JS -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <!-- KaTeX JS (if editor supports formula) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+    <script src="js/blog-common.js"></script>
+    <script src="js/quill-manager.js"></script> <!-- Quill Manager for editor initialization -->
+    <script src="js/blog-submit-form.js"></script>
+</body>
+</html>

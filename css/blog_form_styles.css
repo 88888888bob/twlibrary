@@ -1,0 +1,127 @@
+/* css/blog_form_styles.css */
+.form-container {
+    max-width: 900px; /* Or your preferred width for forms */
+    margin: 30px auto;
+    background: #fff;
+    padding: 25px 35px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    color: #333;
+}
+.form-container h2 i {
+    margin-right: 10px;
+    color: #007bff;
+}
+
+.form-group {
+    margin-bottom: 22px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #495057;
+}
+
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    font-size: 1rem;
+    color: #495057;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.quill-editor-instance { /* For Quill container */
+    min-height: 250px; /* Default height for user post editor */
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    background-color: #fff; /* Ensure it has a background */
+}
+/* When Quill is focused, mimic BS form control focus */
+.ql-container.ql-snow {
+    border-color: #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.ql-container.ql-snow.ql-focused {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+
+.required-star { color: #dc3545; margin-left: 3px; }
+
+.form-row { display: flex; gap: 25px; flex-wrap: wrap; }
+.form-row .form-group { flex: 1 1 0; min-width: 250px; /* Allow wrapping */ }
+
+.topic-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 15px; /* row-gap column-gap */
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    background-color: #fdfdfd;
+}
+.topic-checkbox label { /* Checkbox label itself */
+    margin-right: 0; /* Reset from general form-group label */
+    font-weight: normal;
+    display: inline-flex; /* Use inline-flex for better alignment */
+    align-items: center;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.topic-checkbox input[type="checkbox"] {
+    margin-right: 6px;
+    transform: scale(1.1); /* Slightly larger checkbox */
+}
+.topic-checkbox label:hover {
+    background-color: #e9ecef;
+}
+
+
+#userBookSearchResult ul { list-style: none; padding: 0; margin: 5px 0 0 0; }
+#userBookSearchResult li { padding: 5px; cursor: pointer; border-bottom: 1px solid #eee; }
+#userBookSearchResult li:last-child { border-bottom: none; }
+#userBookSearchResult li:hover { background-color: #f0f0f0; }
+
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 35px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.btn { padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight:500; font-size:0.95rem; }
+.btn-submit { background-color: #28a745; color: white; } .btn-submit:hover { background-color: #218838; }
+.btn-secondary { background-color: #ffc107; color: #212529; } .btn-secondary:hover { background-color: #e0a800;}
+.btn-cancel { background-color: #6c757d; color: white; text-decoration:none; } .btn-cancel:hover { background-color: #5a6268; text-decoration:none;}
+.btn-search.btn-sm { padding: 10px 12px; font-size: 0.9rem;}
