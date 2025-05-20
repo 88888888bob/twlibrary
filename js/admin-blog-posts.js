@@ -20,55 +20,76 @@ function showBlogPostForm(params = {}) { // params might contain postId
 
 
 // --- Blog Posts List View ---
-async function loadAndRenderBlogPosts(page = 1, filters = {}) {
+// loadAndRenderBlogPosts 现在接收一个 filters 对象
+async function loadAndRenderBlogPosts(page = 1, currentFilters = {}) {
     if (typeof showLoading === 'function') showLoading();
     else if (contentArea) contentArea.innerHTML = "<p>加载中...</p>";
 
-    let queryParams = new URLSearchParams({ page: page, limit: 10, ...filters }); // Default limit 10
-    // Add other filters: status, user_id (author), topic_id, book_isbn, search
+    // 构建 queryParams，确保 currentFilters 中的值被正确使用
+    let queryParams = new URLSearchParams({ 
+        page: page, 
+        limit: 10, // Or your preferred default
+        // Add other default sort orders if needed
+    });
+    for (const key in currentFilters) {
+        if (currentFilters[key] !== undefined && currentFilters[key] !== null && currentFilters[key] !== '') {
+            queryParams.append(key, currentFilters[key]);
+        }
+    }
+
+    // 更新筛选器 UI 以反映当前筛选状态
+    // 确保 HTML 结构在调用此函数时已准备好
+    const renderFiltersUI = () => {
+        const searchInput = document.getElementById('postSearchInput');
+        const statusSelect = document.getElementById('postStatusFilter');
+        if (searchInput) searchInput.value = currentFilters.search || '';
+        if (statusSelect) statusSelect.value = currentFilters.status || '';
+    };
+    
+    let sectionTitle = "博客文章列表";
+    if (currentFilters.status === 'pending_review') {
+        sectionTitle = "待审核文章列表";
+    } // 可根据其他筛选条件扩展标题
 
     contentArea.innerHTML = `
         <div class="content-section">
-            <h2><i class="fas fa-list-alt"></i> 博客文章列表</h2>
+            <h2><i class="fas fa-list-alt"></i> ${sectionTitle}</h2>
             <div class="list-header">
                 <button class="btn-add" onclick="navigateToBlogPostForm()"><i class="fas fa-plus"></i> 写新文章</button>
-                <!-- Add filter controls here -->
                 <div id="blogPostsFilters">
-                    <input type="text" id="postSearchInput" placeholder="搜索标题/摘要..." value="${escapeHtml(filters.search || '')}">
+                    <input type="text" id="postSearchInput" placeholder="搜索标题/摘要...">
                     <select id="postStatusFilter">
                         <option value="">所有状态</option>
-                        <option value="published" ${filters.status === 'published' ? 'selected' : ''}>已发布</option>
-                        <option value="draft" ${filters.status === 'draft' ? 'selected' : ''}>草稿</option>
-                        <option value="pending_review" ${filters.status === 'pending_review' ? 'selected' : ''}>待审核</option>
-                        <option value="archived" ${filters.status === 'archived' ? 'selected' : ''}>已归档</option>
+                        <option value="published">已发布</option>
+                        <option value="draft">草稿</option>
+                        <option value="pending_review">待审核</option>
+                        <option value="archived">已归档</option>
                     </select>
-                    <button class="btn-search" onclick="applyPostFilters()"><i class="fas fa-filter"></i> 筛选</button>
+                    <button class="btn-search" onclick="applyAdminPostFilters()"><i class="fas fa-filter"></i> 筛选</button>
+                    <button class="btn-cancel" onclick="clearAdminPostFilters()" title="清除筛选"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <div id="blogPostsTableContainer"></div>
             <div id="blogPostsPaginationContainer"></div>
         </div>
     `;
-    // Add event listener for search input Enter key
+    renderFiltersUI(); // 设置筛选 UI 的初始值
+    
     document.getElementById('postSearchInput')?.addEventListener('keyup', event => {
-        if (event.key === "Enter") applyPostFilters();
+        if (event.key === "Enter") applyAdminPostFilters();
     });
 
-
     try {
-        // NOTE: The public GET /api/blog/posts might only show 'published'.
-        // Admin might need a different endpoint like GET /api/admin/blog/posts for all statuses,
-        // or the existing one needs to respect admin role to show all.
-        // For now, assume /api/blog/posts can be filtered by status if called by admin.
+        // 后端 /api/blog/posts 需要能根据管理员身份返回所有状态的文章
+        // 或者有一个专门的 /api/admin/blog/posts 接口
+        // 假设 GET /api/blog/posts 如果是管理员调用，会忽略 status='published' 的默认限制，
+        // 而是根据传入的 status 参数筛选。
         const response = await apiCall(`/api/blog/posts?${queryParams.toString()}`);
-        
-        const tableContainer = document.getElementById('blogPostsTableContainer');
-        const paginationContainer = document.getElementById('blogPostsPaginationContainer');
-
+        // ... (渲染表格和分页的逻辑保持不变，但 onPageClickCallback 要传递 currentFilters)
         if (response.success && response.data) {
-            renderBlogPostsTable(response.data, tableContainer);
-            renderPagination(response.pagination, paginationContainer, (newPage) => loadAndRenderBlogPosts(newPage, filters));
-        } else {
+            renderBlogPostsTable(response.data, document.getElementById('blogPostsTableContainer'));
+            renderPagination(response.pagination, document.getElementById('blogPostsPaginationContainer'), (newPage) => loadAndRenderBlogPosts(newPage, currentFilters));
+        }else {
             tableContainer.innerHTML = "<p>无法加载文章列表或列表为空。</p>";
             showAlert(response.message || '加载文章列表失败', '错误', 'error');
         }
@@ -77,6 +98,22 @@ async function loadAndRenderBlogPosts(page = 1, filters = {}) {
         document.getElementById('blogPostsTableContainer').innerHTML = `<p>加载文章列表时出错：${error.message}</p>`;
         showAlert(`加载文章列表出错：${error.message}`, '网络错误', 'error');
     }
+}
+
+// 修改 applyPostFilters 以适应 Admin 后台
+function applyAdminPostFilters() {
+    const search = document.getElementById('postSearchInput').value;
+    const status = document.getElementById('postStatusFilter').value;
+    const filters = {};
+    if (search.trim()) filters.search = search.trim();
+    if (status) filters.status = status;
+    loadAndRenderBlogPosts(1, filters); // 重新加载，从第一页开始，带新筛选
+}
+
+function clearAdminPostFilters() {
+    document.getElementById('postSearchInput').value = '';
+    document.getElementById('postStatusFilter').value = '';
+    loadAndRenderBlogPosts(1, {}); // 重新加载，从第一页开始，无筛选
 }
 
 function applyPostFilters() {
@@ -415,23 +452,80 @@ async function submitBlogPostForm(event) {
 }
 
 // --- Admin Actions for Posts (from list view) ---
+// js/admin-blog-posts.js
+
 async function promptChangePostStatus(postId, currentStatus) {
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
-    // In a real app, you'd fetch allowed statuses or have them predefined
-    const newStatus = prompt(`当前状态：${esc(currentStatus)}\n请输入新状态 (draft, pending_review, published, archived):`);
-    if (newStatus && newStatus.trim() !== '' && newStatus !== currentStatus) {
-        try {
-            const response = await apiCall(`/api/admin/blog/posts/${postId}/status`, 'PUT', { status: newStatus.trim() });
-            if (response.success) {
-                showAlert('文章状态更新成功！', '成功', 'success');
-                showBlogPostsList(); // Refresh list
+    
+    const statusOptions = [
+        { value: 'draft', text: '草稿 (Draft)' },
+        { value: 'pending_review', text: '待审核 (Pending Review)' },
+        { value: 'published', text: '已发布 (Published)' },
+        { value: 'archived', text: '已归档 (Archived)' }
+    ];
+
+    let optionsHtml = statusOptions.map(opt => 
+        `<option value="${esc(opt.value)}" ${currentStatus === opt.value ? 'selected' : ''}>${esc(opt.text)}</option>`
+    ).join('');
+
+    const modalContentHtml = `
+        <p>当前文章 (ID: ${postId}) 状态：<strong>${esc(currentStatus)}</strong></p>
+        <p>请选择新的状态:</p>
+        <select id="newPostStatusSelect" class="form-control" style="margin-top: 10px; margin-bottom: 20px; padding: 8px; width: 100%;">
+            ${optionsHtml}
+        </select>
+    `;
+
+    // showConfirm(message, callback, title)
+    showConfirm(modalContentHtml, async (confirmed) => {
+        if (confirmed) {
+            const newStatusSelect = document.getElementById('newPostStatusSelect'); // 获取模态框内部的 select
+            if (newStatusSelect) {
+                const newStatus = newStatusSelect.value;
+                if (newStatus && newStatus !== currentStatus) {
+                    try {
+                        // 调用管理员修改文章状态的 API
+                        const response = await apiCall(`/api/admin/blog/posts/${postId}/status`, 'PUT', { status: newStatus });
+                        if (response.success) {
+                            showAlert('文章状态更新成功！', '成功', 'success');
+                            // 刷新当前的文章列表 (需要知道当前的筛选条件和页码)
+                            // 简单起见，先直接调用，但这会重置筛选和分页
+                            const currentFilters = getCurrentAdminPostFilters(); // 你需要实现这个
+                            const currentPageNum = getCurrentAdminPostPage(); // 你需要实现这个
+                            loadAndRenderBlogPosts(currentPageNum, currentFilters); 
+                        } else {
+                            showAlert(`状态更新失败：${response.message}`, '错误', 'error');
+                        }
+                    } catch (error) {
+                        showAlert(`状态更新时出错：${error.message}`, '网络错误', 'error');
+                    }
+                } else if (newStatus === currentStatus) {
+                    // No change
+                } else {
+                    showAlert('未选择有效的新状态。', '提示', 'info');
+                }
             } else {
-                showAlert(`状态更新失败：${response.message}`, '错误', 'error');
+                 console.error("Could not find newPostStatusSelect in modal.");
             }
-        } catch (error) {
-            showAlert(`状态更新时出错：${error.message}`, '网络错误', 'error');
         }
-    }
+    }, '更改文章状态');
+}
+
+// Helper functions to get current filter/page state (你需要根据你的实现来填充)
+function getCurrentAdminPostFilters() {
+    const search = document.getElementById('postSearchInput')?.value || '';
+    const status = document.getElementById('postStatusFilter')?.value || '';
+    const filters = {};
+    if (search.trim()) filters.search = search.trim();
+    if (status) filters.status = status;
+    return filters;
+}
+function getCurrentAdminPostPage() {
+    // This is tricky. You might need to store currentPage globally in this module
+    // or extract it from the pagination UI if possible.
+    // For now, let's assume it defaults to 1 if not easily retrievable.
+    const activePageElement = document.querySelector('#blogPostsPaginationContainer .page-item.active .page-link');
+    return activePageElement ? parseInt(activePageElement.dataset.page) : 1;
 }
 
 function confirmDeleteBlogPost(postId) {

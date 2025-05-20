@@ -91,7 +91,13 @@ async function loadAndRenderSiteSettings() {
                             <div id="quill_editor_${settingKeyEsc}" class="quill-editor-instance" style="min-height: 150px; border: 1px solid #ccc; border-radius: 4px;"></div>
                             <input type="hidden" id="setting_${settingKeyEsc}" name="${settingKeyEsc}">
                         </div>`;
-                } else if (String(setting.setting_key).endsWith('_json')) {
+                } else if (setting.setting_key === 'blog_post_requires_review') { // <--- 新增处理
+                    settingsHtml += `
+                        <select id="setting_${settingKeyEsc}" name="${settingKeyEsc}" class="form-control">
+                            <option value="true" ${setting.setting_value === 'true' ? 'selected' : ''}>是 (Yes) - 需要审核</option>
+                            <option value="false" ${setting.setting_value === 'false' ? 'selected' : ''}>否 (No) - 直接发布</option>
+                        </select>`
+                }else if (String(setting.setting_key).endsWith('_json')) {
                     fieldHtml = `
                         ${labelHtml}
                         <textarea id="setting_${settingKeyEsc}" name="${settingKeyEsc}" class="form-control" rows="8" style="font-family: monospace;">${esc(setting.setting_value)}</textarea>

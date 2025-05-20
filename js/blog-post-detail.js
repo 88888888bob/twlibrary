@@ -110,6 +110,10 @@ function renderPostDetail(post) {
     // 确保这个 ID `likeCount` 也在你的 button HTML 中
 
     const postHtml = `
+        <div style="margin-bottom: 20px;">
+                <a href="blog.html" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> 返回博客列表</a>
+                ${editButtonHtml ? `<span style="float:right;">${editButtonHtml}</span>` : ''} 
+        </div>
         <header class="post-detail-header">
             <h1>${esc(post.title)}</h1>
             <div class="post-detail-meta">

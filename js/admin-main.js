@@ -180,4 +180,8 @@ function navigateToBlogPostForm(postId = null) { // postId 为 null 表示新建
     dispatchAction('showBlogPostForm', { postId: postId }); 
 }
 function navigateToBlogTopicsAdmin() { dispatchAction('showBlogTopicsAdmin'); }
+
+function navigateToBlogPostsListDefault() { dispatchAction('showBlogPostsList', { filters: {} }); } // 所有文章
+function navigateToPendingReviewPosts() { dispatchAction('showBlogPostsList', { filters: { status: 'pending_review' } }); } // 待审核
+
 // function navigateToBlogCommentsAdmin() { dispatchAction('showBlogCommentsAdmin'); } // 未来
