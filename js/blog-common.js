@@ -168,3 +168,20 @@ function updateCopyrightYear() {
         yearSpan.textContent = new Date().getFullYear();
     }
 }
+
+async function checkUserLoginStatus() {
+    try {
+        // 假设 /api/user 返回 { success: true, user: { id, username, role } } 或错误
+        const response = await blogApiCall('/user', 'GET', null, true); // API 路径可能是 /api/user
+        if (response.success && response.user) {
+            console.log("User logged in:", response.user);
+            return response.user;
+        }
+        console.log("User not logged in or session invalid:", response.message);
+        return null;
+    } catch (error) {
+        // apiCall 应该已经 console.error 了
+        console.info("checkUserLoginStatus: Error during API call, assuming user not logged in.");
+        return null;
+    }
+}

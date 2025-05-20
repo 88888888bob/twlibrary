@@ -5,9 +5,11 @@ let userQuillEditor = null;
 let currentSubmitPostId = null;
 let availableTopicsSubmitCache = [];
 let siteSettingsCache = {}; // To store blog_post_requires_review
+let currentUserForSubmitPage = null; // <--- 声明模块级变量
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkUserLoginStatus();
+    currentUserForSubmitPage = user; // <--- 赋值给模块级变量
     updateUserNavSubmit(user); // Update nav for this page (navLoginLinkSubmit)
     updateCopyrightYearSubmit(); // Update footer year (currentYearSubmit)
 
@@ -27,10 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentSubmitPostId) {
         document.getElementById('formPageTitle').innerHTML = '<i class="fas fa-edit"></i> 编辑文章';
         document.getElementById('userPostIdInput').value = currentSubmitPostId;
-        loadPostDataForEditing(currentSubmitPostId);
+        // loadPostDataForEditing 现在可以使用模块级的 currentUserForSubmitPage
+        loadPostDataForEditing(currentSubmitPostId); 
     } else {
         document.getElementById('formPageTitle').innerHTML = '<i class="fas fa-feather-alt"></i> 撰写新文章';
-        // Initialize Quill for new post
         initializeUserQuillEditor('');
         updateSubmitButtonText();
     }
@@ -141,7 +143,7 @@ async function loadPostDataForEditing(postId) {
             const post = response.post;
             // Security check: ensure current user is the author or admin
             // This should ideally be re-verified on the server on submit, but good for UI too.
-            if (currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin')) {
+            if (currentUserForSubmitPage && (currentUserForSubmitPage.id === post.user_id || currentUserForSubmitPage.role === 'admin')) {
                 form.elements['title'].value = post.title || '';
                 form.elements['excerpt'].value = post.excerpt || '';
                 form.elements['book_isbn'].value = post.book_isbn || '';

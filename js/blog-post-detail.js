@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayError("未提供文章 ID 或标识。");
         return;
     }
+    const userFromStatus = await checkUserLoginStatus();
+    currentUser = userFromStatus; // 赋值给模块级变量
     currentPostId = postIdFromUrl; // slug 也可作为 postId
 
     currentUser = await checkUserLoginStatus();
