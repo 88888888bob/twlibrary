@@ -1,24 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Student Communication Blog</title>
-  <link rel="stylesheet" href="blog_style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交流博客 - 同文学校图书馆</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- <link rel="stylesheet" href="main_page_2.css">  假设这是你的主站点 CSS -->
+    <link rel="stylesheet" href="css/blog_styles.css"> <!-- 新的博客专用 CSS -->
+    <style> /* 临时内联，最终移到 blog_styles.css */
+        .loading-placeholder { text-align: center; padding: 50px; font-style: italic; color: #777;}
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📚 Student Communication Blog</h1>
+    <!-- 导航栏 (复用你已有的导航栏 HTML) -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="index.html" class="logo">TONGWEN SCHOOL LIBRARY</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="blog.html" class="active">交流博客</a></li>
+                <li><a href="board_table.html">排行榜</a></li>
+                <li><a href="sign_up_login_page.html" id="navLoginLink">登录/注册</a></li> <!-- ID for JS update -->
+            </ul>
+            <div class="menu-toggle"><i class="fas fa-bars"></i></div>
+        </div>
+    </nav>
 
-    <div class="post-box">
-      <input type="text" id="username" placeholder="Your name" />
-      <textarea id="postContent" placeholder="Write your message..."></textarea>
-      <button onclick="submitPost()">Post Message</button>
+    <div class="page-container blog-page-container">
+        <header class="blog-header">
+            <h1>书海拾贝 & 智慧碰撞</h1>
+            <p>分享阅读感悟，交流思想火花。 <a href="blog-submit.html" class="btn btn-primary" id="writeNewPostBtn" style="display:none; margin-left: 15px; vertical-align: middle; font-size: 0.8em;">写新文章</a></p>
+        </header>
+
+        <main class="blog-main-content">
+            <section class="posts-section" id="postsSection">
+                <div id="blogPostsListContainer" class="loading-placeholder">
+                    <p>正在加载文章...</p>
+                </div>
+                <nav id="blogPaginationContainer" class="pagination-nav"></nav>
+            </section>
+
+            <aside class="sidebar-section" id="blogSidebar">
+                <div class="widget search-widget">
+                    <h4 class="widget-title">搜索博文</h4>
+                    <form id="blogSearchForm" class="search-form">
+                        <input type="search" name="q" id="blogSearchInput" placeholder="输入关键词...">
+                        <button type="submit"><i class="fas fa-search"></i></button>
+                    </form>
+                </div>
+
+                <div class="widget categories-widget" id="topicsWidgetContainer">
+                    <h4 class="widget-title">热门话题</h4>
+                    <div class="loading-placeholder small"><p>加载话题中...</p></div>
+                </div>
+                
+                <!-- 可以添加更多小部件，如热门文章、标签云等 -->
+            </aside>
+        </main>
     </div>
 
-    <div id="postsContainer"></div>
-  </div>
+    <footer class="main-footer">
+        <p>© <span id="currentYear"></span> TONGWEN SCHOOL LIBRARY. All Rights Reserved.</p>
+    </footer>
 
-  <script src="blog_script.js"></script>
+    <script src="js/blog-common.js"></script> <!-- 新的博客通用 JS -->
+    <script src="js/blog-main-list.js"></script> <!-- 此页面的特定 JS -->
 </body>
 </html>

@@ -1,0 +1,224 @@
+/* css/blog_styles.css */
+/* --- 继承或复用 main_page_2.css 的基础样式 --- */
+/* 你可能需要从 main_page_2.css 复制一些通用样式过来，或者确保它已经被正确链接且不冲突 */
+
+body { /* 确保与主 CSS 协调 */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.65;
+    color: #333;
+    background-color: #f8f9fa; /* 淡雅的背景色 */
+    margin: 0;
+}
+a { color: #0077cc; text-decoration: none; }
+a:hover { text-decoration: underline; color: #0055aa; }
+img { max-width: 100%; height: auto; display: block; }
+
+.page-container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+.blog-page-container { } /* Specific overrides for blog page container if needed */
+
+/* --- 导航栏 (假设与主站点一致，或微调) --- */
+/* .main-nav { ... } .logo { ... } .nav-links { ... } etc. */
+
+/* --- 博客头部 --- */
+.blog-header {
+    text-align: center;
+    padding: 30px 20px 40px;
+    background: linear-gradient(135deg, #6DD5FA, #FF758C); /* 渐变背景 */
+    color: white;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.blog-header h1 {
+    font-size: 2.5rem; /* rem for scalability */
+    margin-bottom: 0.5em;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+.blog-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+.blog-header .btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+}
+.blog-header .btn:hover {
+    transform: translateY(-2px);
+}
+.btn-primary { /* 通用按钮样式，如果主 CSS 没有 */
+    background-color: #007bff; color: white; border:none; border-radius: 5px; cursor: pointer;
+}
+.btn-primary:hover { background-color: #0056b3; }
+
+
+/* --- 主内容区布局 --- */
+.blog-main-content {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr); /* 12 列栅格 */
+    gap: 30px;
+}
+.posts-section {
+    grid-column: span 12; /* 默认占满 */
+}
+.sidebar-section {
+    grid-column: span 12; /* 默认占满，大屏幕再调整 */
+    margin-top: 30px;
+}
+
+@media (min-width: 992px) { /* 大屏幕 (lg) */
+    .posts-section {
+        grid-column: span 8; /* 文章区占 8 列 */
+    }
+    .sidebar-section {
+        grid-column: span 4; /* 侧边栏占 4 列 */
+        margin-top: 0;
+    }
+}
+
+/* --- 文章卡片 --- */
+.post-card-item {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+.post-card-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+.post-thumbnail-link { display: block; }
+.post-thumbnail {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-bottom: 1px solid #eee;
+}
+.post-card-content {
+    padding: 20px 25px;
+}
+.post-meta-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 15px; /* 行间距 列间距 */
+}
+.post-meta-info .meta-item { display: inline-flex; align-items: center; }
+.post-meta-info .meta-item i { margin-right: 5px; }
+.post-category-link { font-weight: 500; color: #007bff; }
+.post-title-link {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+.post-title-link:hover { color: #0056b3; text-decoration: none; }
+.post-excerpt-text {
+    font-size: 0.95rem;
+    color: #495057;
+    margin-bottom: 15px;
+    display: -webkit-box; /* 用于多行省略 */
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: calc(1.65 * 3 * 0.95rem); /* 预估 3 行高度，防止抖动 */
+}
+.post-card-footer {
+    padding: 0 25px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #6c757d;
+    border-top: 1px solid #f0f0f0;
+    margin-top: auto; /* 使页脚总在卡片底部 */
+}
+.read-more-link {
+    font-weight: 500;
+    color: #007bff;
+    padding: 6px 12px;
+    border: 1px solid #007bff;
+    border-radius: 20px;
+    transition: background-color 0.2s, color 0.2s;
+}
+.read-more-link:hover { background-color: #007bff; color: white; text-decoration: none; }
+.post-stats .stat-item { margin-left: 15px; }
+.post-stats .stat-item i { margin-right: 4px; }
+
+
+/* --- 侧边栏小部件 --- */
+.widget {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    margin-bottom: 25px;
+}
+.widget-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+.widget-list { list-style: none; padding: 0; margin: 0; }
+.widget-list li { margin-bottom: 8px; }
+.widget-list li a { color: #555; font-size: 0.9rem; }
+.widget-list li a:hover { color: #007bff; }
+.widget-list li .count { float: right; color: #888; font-size: 0.85em; }
+
+.search-form { display: flex; }
+.search-form input[type="search"] {
+    flex-grow: 1; padding: 10px; border: 1px solid #ced4da;
+    border-right: none; border-radius: 5px 0 0 5px; font-size:0.9rem;
+}
+.search-form input[type="search"]:focus { outline: none; border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25); }
+.search-form button {
+    padding: 10px 12px; border: 1px solid #007bff; background-color: #007bff;
+    color: #fff; cursor: pointer; border-radius: 0 5px 5px 0;
+}
+.search-form button:hover { background-color: #0056b3; }
+
+.tag-cloud .tag-link {
+    display: inline-block; background-color: #eef4f7; color: #3498db;
+    padding: 6px 12px; margin: 0 5px 5px 0; border-radius: 4px; font-size: 0.85rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+.tag-cloud .tag-link:hover { background-color: #3498db; color: #fff; text-decoration: none;}
+
+/* --- 分页 --- */
+.pagination-nav ul { list-style: none; padding: 0; display: flex; justify-content: center; margin-top: 30px; }
+.pagination-nav li { margin: 0 3px; }
+.pagination-nav .page-link {
+    display: block; padding: 8px 12px; border: 1px solid #dee2e6; color: #007bff;
+    border-radius: 4px; transition: background-color 0.2s, color 0.2s;
+}
+.pagination-nav .page-link:hover { background-color: #e9ecef; text-decoration: none; }
+.pagination-nav .page-item.active .page-link { background-color: #007bff; color: white; border-color: #007bff; }
+.pagination-nav .page-item.disabled .page-link { color: #6c757d; pointer-events: none; background-color: #fff; }
+
+/* --- 加载占位符 --- */
+.loading-placeholder { text-align: center; padding: 40px 20px; font-style: italic; color: #777; }
+.loading-placeholder.small { font-size: 0.9em; padding: 20px; }
+
+/* --- 页脚 --- */
+.main-footer {
+    text-align: center; padding: 25px 20px; background-color: #343a40;
+    color: #ced4da; margin-top: 40px; font-size: 0.9rem;
+}
+
+/* --- 移动端导航 (如果需要与主导航不同的行为) --- */
+/* @media (max-width: 850px) { ... } */
