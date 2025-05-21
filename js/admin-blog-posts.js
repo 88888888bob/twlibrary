@@ -7,14 +7,185 @@
 let quillPostEditorInstance = null; // To hold the Quill instance for the post editor
 let availableTopicsCache = []; // Cache for topics to select from
 let currentEditingPostId = null; // To store the ID of the post being edited
-let currentAdminPostPage = 1; // 用于跟踪当前页码
-let currentAdminPostFilters = {}; // 用于存储当前筛选条件 { status: '', search: '' }
+let allFetchedAdminPosts = []; // <--- 新增：缓存从 API 获取的所有文章
+let currentAdminPostPage = 1;
+let currentAdminPostFilters = { status: '', search: '' }; // status 用于标签筛选，search 用于搜索框
 
 // --- Navigation Entry Points ---
 function showBlogPostsList(params = {}) {
-    currentAdminPostFilters = params.filters || {}; // 从导航函数传入初始筛选
-    currentAdminPostPage = 1; // 每次从导航进入列表都重置到第一页
-    loadAndRenderBlogPosts();
+    // params.filters.status 是从导航链接直接设置的初始状态筛选
+    currentAdminPostFilters.status = params.filters?.status || ''; 
+    currentAdminPostFilters.search = ''; // 清除搜索词
+    currentAdminPostPage = 1;
+    fetchAllAdminPostsAndRender(); // <--- 修改为调用新的主函数
+}
+
+// 新的主函数：获取所有文章（或一大批），然后渲染
+async function fetchAllAdminPostsAndRender() {
+    if (typeof showLoading === 'function') showLoading();
+    else if (contentArea) contentArea.innerHTML = "<p>加载中...</p>";
+
+    // API 调用：现在不直接传递状态筛选给 API，除非 API 强制要求
+    // 我们获取所有状态的文章（或者由管理员权限决定）
+    // 如果文章数量非常大，这里仍然可能需要后端分页，但前端缓存的是当前批次
+    // 为了实现前端筛选，一个简单的做法是请求一个较大的 limit，或者多次请求直到获取完（不推荐）
+    // 更好的方式是，后端 API 仍然支持按 status 筛选，但前端可以缓存不同 status 下的结果，或者在“全部”时获取所有。
+    // 让我们先假设管理员可以获取所有状态的文章，如果数量太大，后续再优化 API 分页策略。
+    
+    // 清空之前的缓存
+    allFetchedAdminPosts = [];
+
+    try {
+        // 考虑获取所有状态的文章，后端 API 可能需要一个特殊的参数或根据管理员角色判断
+        // 例如：/api/blog/posts?admin_view=true&limit=1000 (获取前 1000 条所有状态)
+        // 或者，如果后端 /api/blog/posts 已经支持管理员获取所有，则不需要特殊参数
+        // 但为了避免一次加载过多，还是保留后端分页，前端筛选的是当前已加载的页面数据
+        // 或者，如果希望完全前端筛选，那就要一次性加载所有。我们先按一次性加载少量（例如 100 条）来演示：
+        
+        const response = await apiCall(`/api/blog/posts?limit=200`); // 获取较多数据，但仍需考虑性能
+                                                                    // 或者，如果后端支持，获取所有 status 的文章，
+                                                                    // /api/blog/posts?status=all_for_admin
+
+        if (response.success && response.data) {
+            allFetchedAdminPosts = response.data; // 缓存所有获取到的文章
+            renderAdminBlogView(); // <--- 新的渲染函数，它会处理筛选和分页
+        } else {
+            contentArea.innerHTML = `<div class="content-section"><h2>博客文章管理</h2><p>无法加载文章列表：${response.message || '未知错误'}</p></div>`;
+            showAlert(response.message || '加载文章列表失败', '错误', 'error');
+        }
+    } catch (error) {
+        console.error("Error fetching all admin blog posts:", error);
+        contentArea.innerHTML = `<div class="content-section"><h2>博客文章管理</h2><p>加载文章列表时出错：${error.message}</p></div>`;
+        showAlert(`加载文章列表出错：${error.message}`, '网络错误', 'error');
+    }
+}
+
+// 新的渲染函数，包含 UI 和筛选逻辑
+function renderAdminBlogView() {
+    let sectionTitle = "博客文章列表";
+    if (currentAdminPostFilters.status) {
+        const statusMap = { /* ... */ };
+        sectionTitle = statusMap[currentAdminPostFilters.status] || sectionTitle;
+    }
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
+
+    contentArea.innerHTML = `
+        <div class="content-section">
+            <h2><i class="fas fa-list-alt"></i> ${esc(sectionTitle)}</h2>
+            <div class="list-filter-pills">
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === '' ? 'active' : ''}" onclick="filterAdminPostsByStatus('')">全部 (${allFetchedAdminPosts.length})</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'published' ? 'active' : ''}" onclick="filterAdminPostsByStatus('published')">已发布 (${allFetchedAdminPosts.filter(p=>p.status==='published').length})</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'draft' ? 'active' : ''}" onclick="filterAdminPostsByStatus('draft')">草稿 (${allFetchedAdminPosts.filter(p=>p.status==='draft').length})</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'pending_review' ? 'active' : ''}" onclick="filterAdminPostsByStatus('pending_review')">待审核 (${allFetchedAdminPosts.filter(p=>p.status==='pending_review').length})</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'archived' ? 'active' : ''}" onclick="filterAdminPostsByStatus('archived')">已归档 (${allFetchedAdminPosts.filter(p=>p.status==='archived').length})</button>
+            </div>
+            <div class="list-header" style="margin-top:15px;">
+                <button class="btn-add" onclick="navigateToBlogPostForm()"><i class="fas fa-plus"></i> 写新文章</button>
+                <div id="blogPostsFilters" class="search-container">
+                    <input type="text" id="postSearchInputAdmin" placeholder="在当前列表搜索..." value="${esc(currentAdminPostFilters.search || '')}">
+                    <button class="btn-search" onclick="applyAdminPostSearchFilter(true)"><i class="fas fa-search"></i> 搜索</button>
+                    <button class="btn-cancel" onclick="clearAdminPostSearchFilter(true)" title="清除搜索"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div id="blogPostsTableContainer"></div>
+            <div id="blogPostsPaginationContainer"></div>
+        </div>
+    `;
+
+    document.getElementById('postSearchInputAdmin')?.addEventListener('keyup', event => {
+        if (event.key === "Enter") applyAdminPostSearchFilter(true); // true to indicate client-side search
+    });
+
+    // 初始渲染或筛选后渲染
+    renderFilteredAndPaginatedPosts();
+}
+
+
+function filterAdminPostsByStatus(status) {
+    currentAdminPostFilters.status = status;
+    currentAdminPostFilters.search = ''; // 清除搜索条件
+    const searchInput = document.getElementById('postSearchInputAdmin');
+    if(searchInput) searchInput.value = '';
+    currentAdminPostPage = 1;
+    renderAdminBlogView(); // 重新渲染整个视图以更新按钮激活状态和计数
+}
+
+function applyAdminPostSearchFilter(isClientSide = false) {
+    const searchInput = document.getElementById('postSearchInputAdmin');
+    currentAdminPostFilters.search = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    currentAdminPostPage = 1;
+    if (isClientSide) {
+        renderFilteredAndPaginatedPosts(); // 只重新渲染表格和分页
+    } else {
+        fetchAllAdminPostsAndRender(); // 如果需要从服务器重新获取（例如，如果搜索不在当前缓存中）
+    }
+}
+
+function clearAdminPostSearchFilter(isClientSide = false) {
+    currentAdminPostFilters.search = '';
+    const searchInput = document.getElementById('postSearchInputAdmin');
+    if (searchInput) searchInput.value = '';
+    currentAdminPostPage = 1;
+    if (isClientSide) {
+        renderFilteredAndPaginatedPosts();
+    } else {
+        fetchAllAdminPostsAndRender();
+    }
+}
+
+// 新函数：根据当前筛选和分页渲染文章
+function renderFilteredAndPaginatedPosts() {
+    let filteredPosts = allFetchedAdminPosts;
+
+    // 1. 按状态筛选
+    if (currentAdminPostFilters.status) {
+        filteredPosts = filteredPosts.filter(post => post.status === currentAdminPostFilters.status);
+    }
+
+    // 2. 按搜索词筛选 (客户端简单搜索标题和摘要)
+    if (currentAdminPostFilters.search) {
+        const searchTerm = currentAdminPostFilters.search;
+        filteredPosts = filteredPosts.filter(post =>
+            (post.title && post.title.toLowerCase().includes(searchTerm)) ||
+            (post.excerpt && post.excerpt.toLowerCase().includes(searchTerm))
+        );
+    }
+
+    // 3. 客户端分页
+    const limit = 10; // 每页数量
+    const offset = (currentAdminPostPage - 1) * limit;
+    const paginatedPosts = filteredPosts.slice(offset, offset + limit);
+    const totalFilteredItems = filteredPosts.length;
+
+    const tableContainer = document.getElementById('blogPostsTableContainer');
+    const paginationContainer = document.getElementById('blogPostsPaginationContainer');
+
+    renderBlogPostsTable(paginatedPosts, tableContainer); // 使用现有的表格渲染函数
+    
+    const paginationData = {
+        currentPage: currentAdminPostPage,
+        itemsPerPage: limit,
+        totalItems: totalFilteredItems,
+        totalPages: Math.ceil(totalFilteredItems / limit),
+        hasNextPage: currentAdminPostPage < Math.ceil(totalFilteredItems / limit),
+        hasPrevPage: currentAdminPostPage > 1,
+    };
+    renderPagination(paginationData, paginationContainer, (newPage) => {
+        currentAdminPostPage = newPage;
+        renderFilteredAndPaginatedPosts(); // 点击分页时只重新渲染表格和分页
+    });
+
+    // 更新筛选按钮的 active 状态 (在 renderAdminBlogView 中已经处理了初始状态)
+    document.querySelectorAll('.list-filter-pills .btn-filter-pill').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes('全部') && currentAdminPostFilters.status === '') {
+            btn.classList.add('active');
+        } else if (currentAdminPostFilters.status && btn.textContent.toLowerCase().includes(currentAdminPostFilters.status.toLowerCase())) {
+            btn.classList.add('active');
+        }
+        // 更新按钮上的计数 (如果按钮文本中包含计数的话)
+        // 例如："已发布 (count)"
+    });
 }
 
 function showBlogPostForm(params = {}) { // params might contain postId
@@ -172,16 +343,20 @@ function renderBlogPostsTable(posts, container) {
         tableHtml += `
             <tr>
                 <td>${post.id}</td>
-                <td>${esc(post.title)} ${post.is_featured ? '<i class="fas fa-star" title="推荐" style="color:orange;"></i>':''}</td>
-                <td>${esc(post.author_username || post.post_author_username_on_post_table || 'N/A')}</td>
-                <td>${post.book_isbn ? `${esc(post.book_title || '未知书名')} (${esc(post.book_isbn)})` : '-'}</td>
-                <td>${(post.topics && post.topics.length > 0) ? post.topics.map(t => esc(t.name || t)).join(', ') : '-'}</td>
+                <td>${esc(post.title)} ${post.is_featured ? '<i class="fas fa-star" title="已推荐" style="color:orange;"></i>':''}</td>
+                <td>${esc(post.author_username || 'N/A')}</td>
+                <td>${post.book_isbn ? `${esc(post.book_title || '未知')} (${esc(post.book_isbn)})` : '-'}</td>
+                <td>${(post.topics && post.topics.length > 0) ? post.topics.map(t => esc(t.name)).join(', ') : '-'}</td>
                 <td><span class="status-badge status-${esc(post.status)}">${esc(post.status)}</span></td>
-                <td>${post.published_date ? esc(post.published_date) : (post.status === 'published' && post.published_at_formatted ? esc(post.published_at_formatted.split(' ')[0]) : '-')}</td>
+                <td>${post.published_date || '-'}</td>
                 <td>
-                    <button class="btn-edit btn-sm" onclick="navigateToBlogPostForm(${post.id})"><i class="fas fa-edit"></i> 编辑</button>
-                    <button class="btn-info btn-sm" onclick="promptChangePostStatus(${post.id}, '${esc(post.status)}')"><i class="fas fa-sync-alt"></i> 改状态</button>
-                    <button class="btn-delete btn-sm" onclick="confirmDeleteBlogPost(${post.id})"><i class="fas fa-trash"></i> 删除</button>
+                    <button class="btn-edit btn-sm" onclick="navigateToBlogPostForm(${post.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-info btn-sm" onclick="promptChangePostStatus(${post.id}, '${esc(post.status)}')"><i class="fas fa-sync-alt"></i></button>
+                    <button class="btn-warning btn-sm" onclick="togglePostFeature(${post.id}, ${post.is_featured})">
+                        <i class="fas ${post.is_featured ? 'fa-star-slash' : 'fa-star'}"></i> ${post.is_featured ? '取消推荐' : '设为推荐'}
+                    </button>
+                    <button class="btn-delete btn-sm" onclick="confirmDeleteBlogPost(${post.id})"><i class="fas fa-trash"></i></button>
+                    <button class="btn-secondary btn-sm" onclick="previewBlogPost(${post.id})" title="预览"><i class="fas fa-eye"></i></button> 
                 </td>
             </tr>`;
     });
@@ -372,6 +547,7 @@ async function renderBlogPostForm(postId = null) {
                 </div>
                 
                 <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="previewCurrentBlogPostForm()" id="previewFormBtn"><i class="fas fa-eye"></i> 预览</button>
                     <button type="submit" class="btn-submit"><i class="fas fa-save"></i> ${postId ? '更新文章' : '发布文章'}</button>
                     <button type="button" class="btn-cancel" onclick="navigateToBlogPostsList()"><i class="fas fa-times"></i> 取消</button>
                 </div>
@@ -568,4 +744,109 @@ async function deleteBlogPost(postId) {
     } catch (error) {
         showAlert(`删除文章时出错：${error.message}`, '网络错误', 'error');
     }
+}
+
+// 新增函数
+async function togglePostFeature(postId, currentIsFeatured) {
+    const actionText = currentIsFeatured ? "取消推荐" : "设为推荐";
+    showConfirm(`确定要${actionText}文章 ID: ${postId} 吗？`, async (confirmed) => {
+        if (confirmed) {
+            try {
+                // 后端需要一个 API 来切换 is_featured 状态
+                // 例如：POST /api/admin/blog/posts/:postId/feature (toggle)
+                // 或者 PUT /api/admin/blog/posts/:postId/feature-status { is_featured: true/false }
+                // 我们这里假设一个切换 API
+                const response = await apiCall(`/api/admin/blog/posts/${postId}/feature`, 'POST'); // POST 通常用于触发动作
+                if (response.success) {
+                    showAlert(`文章已成功${actionText}！`, '成功', 'success');
+                    // 刷新当前视图以更新按钮和星标
+                    const currentFilters = getCurrentAdminPostFilters();
+                    const currentPageNum = getCurrentAdminPostPage();
+                    // 如果是客户端筛选，直接更新 allFetchedAdminPosts 中的数据并重新渲染当前页
+                    const postInCache = allFetchedAdminPosts.find(p => p.id === postId);
+                    if (postInCache) {
+                        postInCache.is_featured = response.is_featured; // 假设 API 返回新的状态
+                        renderFilteredAndPaginatedPosts(); // 只重新渲染表格和分页
+                    } else {
+                        loadAndRenderBlogPosts(currentPageNum, currentFilters); // 完整刷新（如果数据不在缓存）
+                    }
+                } else {
+                    showAlert(`${actionText}失败：${response.message}`, '错误', 'error');
+                }
+            } catch (error) {
+                showAlert(`${actionText}时出错：${error.message}`, '网络错误', 'error');
+            }
+        }
+    });
+}
+function previewBlogPost(postIdOrSlug) {
+    // 假设你的博客文章详情页 URL 是 blog-post.html?id=<id> 或 blog-post.html?slug=<slug>
+    // 最好是使用 slug，如果 slug 是唯一的且用于 URL
+    // 如果没有 slug，就用 ID
+    if (!postIdOrSlug) {
+        showAlert("无法预览：文章 ID 或 Slug 缺失。", "错误", "error");
+        return;
+    }
+    // 构建面向用户的文章详情页 URL。你需要知道这个 URL 的结构。
+    // 例如，如果你的用户博客部署在与 admin 不同的地方，或者有特定路径。
+    // 简单假设它在同一站点下，路径为 blog-post.html
+    const previewUrl = `../blog-post.html?${/^\d+$/.test(postIdOrSlug) ? 'id' : 'slug'}=${encodeURIComponent(postIdOrSlug)}`;
+    window.open(previewUrl, '_blank'); // 在新标签页中打开
+}
+
+// 新增函数
+function previewCurrentBlogPostForm() {
+    const form = document.getElementById('blogPostForm');
+    if (!form) return;
+
+    // 1. 同步 Quill 内容到隐藏字段 (如果还没有做)
+    if (typeof syncAllQuillEditorsToHiddenInputs === 'function') {
+        syncAllQuillEditorsToHiddenInputs();
+    } else if (quillPostEditorInstance) {
+        document.getElementById('postContentHidden').value = quillPostEditorInstance.root.innerHTML;
+    }
+
+    // 2. 收集表单数据 (特别是 title, content, slug 如果有的话)
+    const title = form.elements['title'] ? form.elements['title'].value : '（无标题）';
+    const content = form.elements['content'] ? form.elements['content'].value : '<p>（无内容）</p>';
+    // 对于新文章，可能还没有 slug。对于已保存的文章，其 slug 应该在 postData 中。
+    // 如果是编辑现有文章，currentEditingPostId 会有值，可以从那里获取 slug
+    // 如果是新文章，预览时可能无法直接用 slug，除非你先保存草稿获取 slug。
+    
+    // 方案 A: 简单预览 (直接在新标签页打开一个包含当前表单内容的临时页面 - 复杂)
+    // 方案 B: 如果是已保存的文章 (currentEditingPostId 存在)，则用其 ID/Slug 打开用户端详情页
+    // 方案 C: 将当前表单的内容（特别是标题和 Quill 内容）传递给一个预览模态框或新页面进行渲染
+    //         这需要一个专门的预览渲染逻辑，与 blog-post-detail.js 类似。
+
+    // 我们先实现方案 B (如果是编辑状态)
+    if (currentEditingPostId) {
+        // 假设 postData (在 renderBlogPostForm 中加载的) 包含 slug
+        // 或者我们需要重新获取一下最新的 slug
+        let slugToUse = '';
+        const postBeingEdited = allFetchedAdminPosts.find(p => p.id === currentEditingPostId); // 尝试从缓存获取
+        if (postBeingEdited && postBeingEdited.slug) {
+            slugToUse = postBeingEdited.slug;
+        } else {
+            // 如果缓存没有或没有 slug，就用 ID
+            previewBlogPost(currentEditingPostId.toString()); // 调用之前的预览函数
+            return;
+        }
+        previewBlogPost(slugToUse);
+        return;
+    }
+
+    // 对于新文章的预览 (方案 C 的简化版：将内容存入 localStorage，由预览页读取)
+    const previewData = {
+        title: title,
+        content: content,
+        author_username: "当前管理员", // 或从当前登录信息获取
+        published_at: new Date().toISOString(), // 示意
+        topics: [], // 预览时可能不方便带上动态选择的话题
+        book_title: form.elements['book_isbn']?.value ? '关联书籍预览' : null
+    };
+    localStorage.setItem('blogPostPreviewData', JSON.stringify(previewData));
+    
+    // 打开一个通用的预览页面，该页面会从 localStorage 读取 'blogPostPreviewData'
+    const previewPageUrl = `../blog-post-preview.html`; // 你需要创建这个 HTML 文件
+    window.open(previewPageUrl, '_blank');
 }

@@ -1,0 +1,80 @@
+<!-- blog-post-preview.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章预览</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <link rel="stylesheet" href="css/blog_styles.css"> <!-- 复用博客样式 -->
+    <style>
+        body { background-color: #f0f0f0; padding-top: 20px; }
+        .post-detail-container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 30px 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .preview-notice { background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; margin-bottom: 20px; text-align: center; border-radius: 4px; }
+        /* 复用 blog-post.html 中的其他样式 */
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="preview-notice"><strong>注意：</strong> 这是文章预览，内容未保存。关闭此页面不会影响编辑。</div>
+        <article class="post-detail-container" id="postPreviewDetailContainer">
+            <p>正在加载预览...</p>
+        </article>
+    </div>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="js/blog-common.js"></script> <!-- 需要 escapeHTML -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const previewDataString = localStorage.getItem('blogPostPreviewData');
+            const container = document.getElementById('postPreviewDetailContainer');
+            const esc = typeof escapeHTML === 'function' ? escapeHTML : (text) => text;
+
+            if (previewDataString && container) {
+                try {
+                    const post = JSON.parse(previewDataString);
+                    document.title = `预览：${esc(post.title || '无标题')}`;
+
+                    const publishedDate = new Date(post.published_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+                    // 简化版，不显示所有元信息
+                    const postHtml = `
+                        <header class="post-detail-header">
+                            <h1>${esc(post.title)}</h1>
+                            <div class="post-detail-meta">
+                                <span class="meta-item author"><i class="fas fa-user"></i> ${esc(post.author_username || '作者')}</span>
+                                <span class="meta-item published-date"><i class="fas fa-calendar-alt"></i> 预览时间：${publishedDate}</span>
+                            </div>
+                        </header>
+                        <div class="post-content-area" id="postPreviewContentActual">
+                            ${post.content} <!-- 内容直接渲染，因为它来自可信的编辑器预览 -->
+                        </div>
+                        ${post.book_title ? `<div class="post-associations"><h4><i class="fas fa-book"></i> 关联书籍</h4><p>${esc(post.book_title)}</p></div>` : ''}
+                    `;
+                    container.innerHTML = postHtml;
+
+                    // 渲染 KaTeX 和 Highlight.js (如果需要)
+                    if (typeof renderMathInElement === 'function' && post.content.includes('katex')) {
+                         renderMathInElement(document.getElementById('postPreviewContentActual'), { /* ... delimiters ... */ });
+                    }
+                    if (typeof hljs !== 'undefined' && post.content.includes('<pre>')) {
+                        document.querySelectorAll('#postPreviewContentActual pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                    }
+
+                } catch (e) {
+                    container.innerHTML = "<p style='color:red;'>加载预览数据失败。</p>";
+                    console.error("Error parsing preview data:", e);
+                }
+            } else if (container) {
+                container.innerHTML = "<p>没有可预览的内容。请返回编辑页面并输入内容。</p>";
+            }
+            // 清除 localStorage 中的预览数据，避免下次打开还是旧的
+            // localStorage.removeItem('blogPostPreviewData'); // 或者在用户关闭预览标签页时清除
+        });
+    </script>
+</body>
+</html>

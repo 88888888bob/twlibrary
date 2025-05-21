@@ -17,25 +17,14 @@ function renderDashboardUI() {
         <div class="content-section">
             <h2><i class="fas fa-tachometer-alt"></i> 仪表盘</h2>
             <div class="dashboard">
-                <div class="dashboard-item">
-                    <h3>图书总数</h3>
-                    <p id="totalBooksCount">--</p>
-                </div>
-                <div class="dashboard-item">
-                    <h3>用户总数</h3>
-                    <p id="totalUsersCount">--</p>
-                </div>
-                <div class="dashboard-item">
-                    <h3>当前借出</h3>
-                    <p id="currentBorrowsCount">--</p>
-                </div>
-                <div class="dashboard-item">
-                    <h3>逾期数量</h3>
-                    <p id="overdueBorrowsCount">--</p>
-                </div>
-                <div class="dashboard-item">
-                    <h3>最近 7 天新增用户</h3>
-                    <p id="newUsersLast7DaysCount">--</p> 
+                <div class="dashboard-item"><h3>图书总数</h3><p id="totalBooksCount">--</p></div>
+                <div class="dashboard-item"><h3>用户总数</h3><p id="totalUsersCount">--</p></div>
+                <div class="dashboard-item"><h3>当前借出</h3><p id="currentBorrowsCount">--</p></div>
+                <div class="dashboard-item"><h3>逾期数量</h3><p id="overdueBorrowsCount">--</p></div>
+                <div class="dashboard-item"><h3>最近 7 天新增用户</h3><p id="newUsersLast7DaysCount">--</p></div>
+                <div class="dashboard-item clickable" id="pendingPostsItem" onclick="navigateToPendingReviewPosts()">
+                    <h3><i class="fas fa-user-clock"></i> 待审核文章</h3>
+                    <p id="pendingReviewPostsCount">--</p>
                 </div>
             </div>
         </div>`;
@@ -48,6 +37,7 @@ async function loadDashboardData() {
     const currentBorrowsElem = document.getElementById('currentBorrowsCount');
     const overdueBorrowsElem = document.getElementById('overdueBorrowsCount');
     const newUsersLast7DaysElem = document.getElementById('newUsersLast7DaysCount');
+    const pendingReviewPostsElem = document.getElementById('pendingReviewPostsCount');
 
     // Set to loading or keep default '--'
     if(totalBooksElem) totalBooksElem.textContent = '...';
@@ -55,6 +45,7 @@ async function loadDashboardData() {
     if(currentBorrowsElem) currentBorrowsElem.textContent = '...';
     if(overdueBorrowsElem) overdueBorrowsElem.textContent = '...';
     if(newUsersLast7DaysElem) newUsersLast7DaysElem.textContent = '...';
+    if(pendingReviewPostsElem) pendingReviewPostsElem.textContent = '...';
 
     try {
         // Use a single API call to fetch all stats
@@ -67,6 +58,14 @@ async function loadDashboardData() {
             if (currentBorrowsElem) currentBorrowsElem.textContent = stats.currentBorrows ?? '--';
             if (overdueBorrowsElem) overdueBorrowsElem.textContent = stats.overdueBorrows ?? '--';
             if (newUsersLast7DaysElem) newUsersLast7DaysElem.textContent = stats.newUsersLast7Days ?? '--';
+            if (pendingReviewPostsElem) pendingReviewPostsElem.textContent = stats.pendingReviewPosts ?? '--';
+            // 如果数量大于 0，可以给待审核项加个醒目提示，例如改变父元素背景
+            const pendingPostsItem = document.getElementById('pendingPostsItem');
+            if (pendingPostsItem && stats.pendingReviewPosts > 0) {
+                pendingPostsItem.classList.add('has-pending'); // CSS 可以定义 .has-pending 样式
+            } else if (pendingPostsItem) {
+                pendingPostsItem.classList.remove('has-pending');
+            }
         } else {
             // If API call was successful but data.success is false, or stats object is missing
             console.warn("Failed to retrieve some or all dashboard stats:", data.message);
