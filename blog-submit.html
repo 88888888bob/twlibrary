@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>撰写文章 - 同文学校图书馆</title> <!-- Title 会动态更新 -->
+    <title>"Writing Articles - Tongwen School Library"</title> <!-- Title 会动态更新 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Quill CSS -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
@@ -40,10 +40,10 @@
         <div class="nav-container">
             <a href="index.html" class="logo">TONGWEN SCHOOL LIBRARY</a>
             <ul class="nav-links">
-                <li><a href="index.html">首页</a></li>
-                <li><a href="blog.html">交流博客</a></li>
-                <li><a href="board_table.html">排行榜</a></li>
-                <li><a href="sign_up_login_page.html" id="navLoginLinkSubmit">登录/注册</a></li>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="blog.html">Blogs</a></li>
+                <li><a href="board_table.html">Leaderboard</a></li>
+                <li><a href="sign_up_login_page.html" id="navLoginLinkSubmit">Login/Signup</a></li>
             </ul>
             <div class="menu-toggle"><i class="fas fa-bars"></i></div>
         </div>
@@ -51,45 +51,45 @@
 
     <div class="page-container">
         <div class="form-container" id="blogSubmitFormContainer">
-            <h2 id="formPageTitle"><i class="fas fa-edit"></i> 撰写新文章</h2>
+            <h2 id="formPageTitle"><i class="fas fa-edit"></i> Write a new blog</h2>
             <form id="blogPostUserForm" onsubmit="submitUserBlogPostForm(event)">
                 <input type="hidden" name="postId" id="userPostIdInput" value="">
                 
                 <div class="form-group">
-                    <label for="userPostTitle">标题<span class="required-star">*</span>:</label>
+                    <label for="userPostTitle">Title<span class="required-star">*</span>:</label>
                     <input type="text" id="userPostTitle" name="title" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="userPostQuillEditor">内容<span class="required-star">*</span>:</label>
+                    <label for="userPostQuillEditor">Content<span class="required-star">*</span>:</label>
                     <div id="userPostQuillEditor" class="quill-editor-instance"></div> <!-- Style min-height with CSS -->
                     <input type="hidden" id="userPostContentHidden" name="content">
                 </div>
 
                 <div class="form-group">
-                    <label for="userPostExcerpt">摘要 (可选):</label>
+                    <label for="userPostExcerpt">Best part of the book (Optional):</label>
                     <textarea id="userPostExcerpt" name="excerpt" rows="3"></textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="userPostBookIsbn">关联书籍 ISBN (可选):</label>
+                        <label for="userPostBookIsbn">Related books ISBN (Optional):</label>
                         <div style="display:flex;">
-                            <input type="text" id="userPostBookIsbn" name="book_isbn" placeholder="输入ISBN或书名搜索">
+                            <input type="text" id="userPostBookIsbn" name="book_isbn" placeholder="Type in ISBN to start searching">
                             <button type="button" class="btn btn-search btn-sm" onclick="userSearchBookForPost()" style="margin-left:5px;"><i class="fas fa-search"></i></button>
                         </div>
                         <div id="userBookSearchResult" style="margin-top:5px; font-size:0.9em;"></div>
                     </div>
                     <div class="form-group">
-                        <label for="userPostFeaturedImageUrl">封面图片 URL (可选):</label>
+                        <label for="userPostFeaturedImageUrl">Cover page URL (Optional):</label>
                         <input type="url" id="userPostFeaturedImageUrl" name="featured_image_url" placeholder="https://example.com/image.jpg">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>选择话题 (可选):</label>
+                    <label>Choose your topic (Optional):</label>
                     <div class="topic-checkbox-group" id="userTopicSelection">
-                        <p>正在加载话题...</p>
+                        <p>Loading your topic...</p>
                     </div>
                 </div>
                 
@@ -99,26 +99,26 @@
 
                 <div class="form-row">
                      <div class="form-group">
-                        <label for="userPostVisibility">可见性：</label>
+                        <label for="userPostVisibility">Visibility：</label>
                         <select id="userPostVisibility" name="visibility">
-                            <option value="public" selected>公开 (所有人可见)</option>
-                            <option value="members_only">仅登录用户可见</option>
-                            <option value="unlisted">不公开列出 (知道链接可访问)</option>
+                            <option value="public" selected>Public (For everyone)</option>
+                            <option value="members_only">Members only</option>
+                            <option value="unlisted">Non-public (Can only see with link)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="userPostAllowComments">允许评论：</label>
+                        <label for="userPostAllowComments">Allow to Comment：</label>
                         <select id="userPostAllowComments" name="allow_comments">
-                            <option value="true" selected>是</option>
-                            <option value="false">否</option>
+                            <option value="true" selected>Yes</option>
+                            <option value="false">No</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="saveDraft()" id="saveDraftBtn" style="margin-right:10px;"><i class="fas fa-save"></i> 保存草稿</button>
-                    <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> <span id="submitBtnText">提交审核/发布</span></button>
-                    <a href="blog.html" class="btn btn-cancel">取消</a>
+                    <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> <span id="submitBtnText">Submit for assessment</span></button>
+                    <a href="blog.html" class="btn btn-cancel">Cancel</a>
                 </div>
             </form>
         </div>
