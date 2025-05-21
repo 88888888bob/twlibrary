@@ -783,6 +783,11 @@ function previewBlogPost(postIdOrSlug) {
     // 假设你的博客文章详情页 URL 是 blog-post.html?id=<id> 或 blog-post.html?slug=<slug>
     // 最好是使用 slug，如果 slug 是唯一的且用于 URL
     // 如果没有 slug，就用 ID
+    if (currentUserRole !== 'admin') { // 检查全局角色变量
+        if (contentArea) contentArea.innerHTML = `<div class="content-section"><h2>权限不足</h2><p>您没有权限查看博客文章管理。</p></div>`;
+        showAlert('您没有权限访问此功能。', '权限不足', 'error');
+        return;
+    }
     if (!postIdOrSlug) {
         showAlert("无法预览：文章 ID 或 Slug 缺失。", "错误", "error");
         return;

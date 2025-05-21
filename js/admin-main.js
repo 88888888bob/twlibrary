@@ -1,5 +1,7 @@
 // js/admin-main.js
 
+let currentUserRole = null; // <--- 新增全局变量存储用户角色
+
 // Ensure necessary globals from admin-utils.js and admin-modals.js are loaded first.
 // For example: API_BASE_URL, LOGIN_PAGE_URL, contentArea, showLoading, apiCall, showAlert, showConfirm
 
@@ -62,8 +64,14 @@ async function checkAdminLoginAndLoadInitialView() {
 
         if (data && data.success && data.user && data.user.role === 'admin') {
             console.log('Admin login verified.');
-            // Load default view, e.g., dashboard
-            dispatchAction('showDashboard'); // Ensure showDashboard is globally available from admin-dashboard.js
+            currentUserRole = data.user.role; // <--- 存储角色
+            dispatchAction('showDashboard'); 
+        } else if (data && data.success && data.user) { // 用户已登录但不是管理员
+             currentUserRole = data.user.role;
+             showAlert('您已登录，但没有管理员权限访问此后台。', '权限不足', 'error');
+             // 可以选择重定向到用户首页或只显示一个错误信息
+             contentArea.innerHTML = `<div class="content-section"><h2>权限不足</h2><p>您没有权限访问此管理后台。</p></div>`;
+             // 如果有用户可以访问的有限功能，可以在这里处理
         } else {
             let errorMessage = '访问被拒绝。';
             if (data && data.message) {
@@ -89,8 +97,18 @@ async function checkAdminLoginAndLoadInitialView() {
 
 function dispatchAction(actionName, params = null) {
     console.log(`Dispatching action: ${actionName}`, params || '');
-    // This function assumes that the functions to be called (e.g., showDashboard, showBookList)
-    // are defined globally or exposed by their respective modules and accessible via window[actionName].
+    
+    // 前置权限检查 (可选，因为 API 后端会再次校验，但可以改善前端体验)
+    // 例如，某些 action 只允许管理员执行
+    const adminOnlyActions = ['showBlogPostsList', 'showBlogPostForm', 'showBlogTopicsAdmin', /* ...其他管理员专属 action */ ];
+    if (adminOnlyActions.includes(actionName) && currentUserRole !== 'admin') {
+        showAlert('您没有权限执行此操作。', '权限不足', 'error');
+        if (contentArea && !contentArea.querySelector('h2')?.textContent.includes('权限不足')) { // 避免重复渲染权限不足消息
+            contentArea.innerHTML = `<div class="content-section"><h2>权限不足</h2><p>您没有权限访问此功能。</p></div>`;
+        }
+        return; // 阻止进一步操作
+    }
+    
     if (typeof window[actionName] === 'function') {
         // Clear previous content and show loading (optional, module functions can also do this)
         // if (typeof showLoading === 'function') showLoading();
