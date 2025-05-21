@@ -1,0 +1,81 @@
+/* Apply the Jaro font */
+body {
+    font-family: 'Julius Sans One', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Navbar Styles */
+nav {
+    background-color: #333;
+    padding: 15px;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline;
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* About Us Section */
+#about {
+    background-color: #f4f4f4;
+    padding: 50px 20px;
+    text-align: center;
+}
+
+#about h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+#about p {
+    font-size: 18px;
+    margin-bottom: 40px;
+}
+
+/* Contributors Section */
+.contributors {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+}
+
+.contributor {
+    text-align: center;
+    width: 250px;
+}
+
+.contributor img {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.contributor h3 {
+    margin-top: 10px;
+    font-size: 22px;
+}
+
+.contributor p {
+    font-size: 16px;
+    color: #555;
+}
