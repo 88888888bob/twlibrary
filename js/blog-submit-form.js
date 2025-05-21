@@ -239,7 +239,7 @@ async function submitUserBlogPostForm(event, isDraftSave = false) {
     // If editing, status comes from the form (unless admin has special logic)
 
     const postId = currentSubmitPostId;
-    const endpoint = postId ? `/blog/posts/${postId}` : '/api/blog/posts';
+    const endpoint = postId ? `/blog/posts/${postId}` : '/blog/posts';
     const method = postId ? 'PUT' : 'POST';
 
     try {
