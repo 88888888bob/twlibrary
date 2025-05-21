@@ -300,9 +300,12 @@ a:hover {
     text-transform: uppercase; /* Optional: for more "buttony" feel */
     letter-spacing: 0.5px; /* Optional */
 }
-.btn:active, .btn-add:active, /* etc. for all button types */ {
+.btn:active, .btn-add:active {
     transform: scale(0.98); /* Slight press effect */
 }
+
+
+
 .btn i, .btn-add i, .btn-edit i, .btn-delete i, .btn-search i, .btn-filter i { margin-right: 8px; }
 
 .btn-add, .btn-submit { background-color: #28a745; } .btn-add:hover, .btn-submit:hover { background-color: #218838; }
@@ -354,3 +357,81 @@ a:hover {
 .mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; } .mt-3 { margin-top: 1rem; }
 .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 1rem; }
 /* Add more as needed */
+
+.list-filter-pills {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-filter-pill {
+    padding: 8px 15px;
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+    color: #495057;
+    border-radius: 20px; /* 圆角胶囊状 */
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.btn-filter-pill:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.btn-filter-pill.active {
+    background-color: var(--primary-color, #007bff); /* 使用 CSS 变量或直接颜色 */
+    color: white;
+    border-color: var(--primary-color, #007bff);
+}
+
+.list-header .search-container input[type="text"] { /* 确保搜索框样式协调 */
+    margin-right: 0; /* 移除之前的 margin，让按钮紧贴 */
+}
+.list-header .search-container .btn-cancel { /* 清除搜索按钮样式 */
+    margin-left: 5px;
+    background-color: #6c757d; /* 与其他取消按钮一致 */
+}
+.list-header .search-container .btn-cancel:hover {
+    background-color: #5a6268;
+}
+
+/* 状态徽章 (如果之前没有详细定义) */
+.status-badge {
+    padding: 0.25em 0.6em;
+    font-size: 0.8em;
+    font-weight: 600;
+    border-radius: 0.25rem;
+    color: #fff;
+    text-transform: capitalize;
+}
+.status-published { background-color: #28a745; } /* 绿色 */
+.status-draft { background-color: #6c757d; }    /* 灰色 */
+.status-pending_review { background-color: #ffc107; color: #212529 !important; } /* 黄色 */
+.status-archived { background-color: #17a2b8; } /* 青色 */
+
+/* admin.css */
+.form-group.setting-changed {
+    background-color: #fffbe5; /* 更淡的黄色 */
+    border: 1px solid #ffeeba; /* 与背景匹配的边框 */
+    border-left: 4px solid #ffc107; /* 更明显的左侧提示条 */
+    padding: 15px; /* 统一内边距 */
+    margin: 10px -16px; /* 调整外边距以适应内边距和边框，使其视觉上对齐 */
+    border-radius: 0.25rem;
+    transition: background-color 0.3s ease;
+}
+.form-group.setting-changed label {
+    color: #856404; /* 匹配背景的深色文字 */
+    font-weight: bold;
+}
+.settings-page-description {
+    font-size: 0.95em;
+    color: #555;
+    margin-bottom: 25px;
+    padding: 12px 18px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+}

@@ -7,10 +7,14 @@
 let quillPostEditorInstance = null; // To hold the Quill instance for the post editor
 let availableTopicsCache = []; // Cache for topics to select from
 let currentEditingPostId = null; // To store the ID of the post being edited
+let currentAdminPostPage = 1; // 用于跟踪当前页码
+let currentAdminPostFilters = {}; // 用于存储当前筛选条件 { status: '', search: '' }
 
 // --- Navigation Entry Points ---
-function showBlogPostsList(filters = {}) { // Default to empty filters
-    loadAndRenderBlogPosts(1, filters); // Load first page with optional filters
+function showBlogPostsList(params = {}) {
+    currentAdminPostFilters = params.filters || {}; // 从导航函数传入初始筛选
+    currentAdminPostPage = 1; // 每次从导航进入列表都重置到第一页
+    loadAndRenderBlogPosts();
 }
 
 function showBlogPostForm(params = {}) { // params might contain postId
@@ -21,75 +25,69 @@ function showBlogPostForm(params = {}) { // params might contain postId
 
 // --- Blog Posts List View ---
 // loadAndRenderBlogPosts 现在接收一个 filters 对象
-async function loadAndRenderBlogPosts(page = 1, currentFilters = {}) {
+async function loadAndRenderBlogPosts() { // 不再直接接收 page 和 filters 参数，使用全局的
     if (typeof showLoading === 'function') showLoading();
     else if (contentArea) contentArea.innerHTML = "<p>加载中...</p>";
 
-    // 构建 queryParams，确保 currentFilters 中的值被正确使用
     let queryParams = new URLSearchParams({ 
-        page: page, 
-        limit: 10, // Or your preferred default
-        // Add other default sort orders if needed
+        page: currentAdminPostPage, 
+        limit: 10 
     });
-    for (const key in currentFilters) {
-        if (currentFilters[key] !== undefined && currentFilters[key] !== null && currentFilters[key] !== '') {
-            queryParams.append(key, currentFilters[key]);
-        }
-    }
+    if (currentAdminPostFilters.status) queryParams.append('status', currentAdminPostFilters.status);
+    if (currentAdminPostFilters.search) queryParams.append('search', currentAdminPostFilters.search);
 
-    // 更新筛选器 UI 以反映当前筛选状态
-    // 确保 HTML 结构在调用此函数时已准备好
-    const renderFiltersUI = () => {
-        const searchInput = document.getElementById('postSearchInput');
-        const statusSelect = document.getElementById('postStatusFilter');
-        if (searchInput) searchInput.value = currentFilters.search || '';
-        if (statusSelect) statusSelect.value = currentFilters.status || '';
-    };
-    
     let sectionTitle = "博客文章列表";
-    if (currentFilters.status === 'pending_review') {
-        sectionTitle = "待审核文章列表";
-    } // 可根据其他筛选条件扩展标题
+    if (currentAdminPostFilters.status) {
+        const statusMap = {
+            'published': '已发布文章', 'draft': '草稿箱', 
+            'pending_review': '待审核文章', 'archived': '已归档文章'
+        };
+        sectionTitle = statusMap[currentAdminPostFilters.status] || sectionTitle;
+    }
+    
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
 
     contentArea.innerHTML = `
         <div class="content-section">
-            <h2><i class="fas fa-list-alt"></i> ${sectionTitle}</h2>
-            <div class="list-header">
+            <h2><i class="fas fa-list-alt"></i> ${esc(sectionTitle)}</h2>
+            
+            <div class="list-filter-pills">
+                <button class="btn-filter-pill ${!currentAdminPostFilters.status ? 'active' : ''}" onclick="setAdminPostStatusFilter('')">全部</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'published' ? 'active' : ''}" onclick="setAdminPostStatusFilter('published')">已发布</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'draft' ? 'active' : ''}" onclick="setAdminPostStatusFilter('draft')">草稿</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'pending_review' ? 'active' : ''}" onclick="setAdminPostStatusFilter('pending_review')">待审核</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'archived' ? 'active' : ''}" onclick="setAdminPostStatusFilter('archived')">已归档</button>
+            </div>
+
+            <div class="list-header" style="margin-top:15px;">
                 <button class="btn-add" onclick="navigateToBlogPostForm()"><i class="fas fa-plus"></i> 写新文章</button>
-                <div id="blogPostsFilters">
-                    <input type="text" id="postSearchInput" placeholder="搜索标题/摘要...">
-                    <select id="postStatusFilter">
-                        <option value="">所有状态</option>
-                        <option value="published">已发布</option>
-                        <option value="draft">草稿</option>
-                        <option value="pending_review">待审核</option>
-                        <option value="archived">已归档</option>
-                    </select>
-                    <button class="btn-search" onclick="applyAdminPostFilters()"><i class="fas fa-filter"></i> 筛选</button>
-                    <button class="btn-cancel" onclick="clearAdminPostFilters()" title="清除筛选"><i class="fas fa-times"></i></button>
+                <div id="blogPostsFilters" class="search-container">
+                    <input type="text" id="postSearchInput" placeholder="搜索标题/摘要..." value="${esc(currentAdminPostFilters.search || '')}">
+                    <button class="btn-search" onclick="applyAdminPostSearchFilter()"><i class="fas fa-search"></i> 搜索</button>
+                    <button class="btn-cancel" onclick="clearAdminPostSearchFilter()" title="清除搜索"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <div id="blogPostsTableContainer"></div>
             <div id="blogPostsPaginationContainer"></div>
         </div>
     `;
-    renderFiltersUI(); // 设置筛选 UI 的初始值
     
     document.getElementById('postSearchInput')?.addEventListener('keyup', event => {
-        if (event.key === "Enter") applyAdminPostFilters();
+        if (event.key === "Enter") applyAdminPostSearchFilter();
     });
 
     try {
-        // 后端 /api/blog/posts 需要能根据管理员身份返回所有状态的文章
-        // 或者有一个专门的 /api/admin/blog/posts 接口
-        // 假设 GET /api/blog/posts 如果是管理员调用，会忽略 status='published' 的默认限制，
-        // 而是根据传入的 status 参数筛选。
         const response = await apiCall(`/api/blog/posts?${queryParams.toString()}`);
-        // ... (渲染表格和分页的逻辑保持不变，但 onPageClickCallback 要传递 currentFilters)
+        const tableContainer = document.getElementById('blogPostsTableContainer');
+        const paginationContainer = document.getElementById('blogPostsPaginationContainer');
+
         if (response.success && response.data) {
-            renderBlogPostsTable(response.data, document.getElementById('blogPostsTableContainer'));
-            renderPagination(response.pagination, document.getElementById('blogPostsPaginationContainer'), (newPage) => loadAndRenderBlogPosts(newPage, currentFilters));
-        }else {
+            renderBlogPostsTable(response.data, tableContainer);
+            renderPagination(response.pagination, paginationContainer, (newPage) => {
+                currentAdminPostPage = newPage;
+                loadAndRenderBlogPosts();
+            });
+        } else {
             tableContainer.innerHTML = "<p>无法加载文章列表或列表为空。</p>";
             showAlert(response.message || '加载文章列表失败', '错误', 'error');
         }
@@ -98,6 +96,28 @@ async function loadAndRenderBlogPosts(page = 1, currentFilters = {}) {
         document.getElementById('blogPostsTableContainer').innerHTML = `<p>加载文章列表时出错：${error.message}</p>`;
         showAlert(`加载文章列表出错：${error.message}`, '网络错误', 'error');
     }
+}
+
+// 新的筛选函数
+function setAdminPostStatusFilter(status) {
+    currentAdminPostFilters.status = status;
+    currentAdminPostPage = 1; // 切换状态时重置到第一页
+    loadAndRenderBlogPosts();
+}
+
+function applyAdminPostSearchFilter() {
+    const searchInput = document.getElementById('postSearchInput');
+    currentAdminPostFilters.search = searchInput ? searchInput.value.trim() : '';
+    currentAdminPostPage = 1;
+    loadAndRenderBlogPosts();
+}
+
+function clearAdminPostSearchFilter() {
+    currentAdminPostFilters.search = '';
+    const searchInput = document.getElementById('postSearchInput');
+    if (searchInput) searchInput.value = '';
+    currentAdminPostPage = 1;
+    loadAndRenderBlogPosts();
 }
 
 // 修改 applyPostFilters 以适应 Admin 后台

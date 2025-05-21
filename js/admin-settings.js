@@ -1,29 +1,29 @@
 // js/admin-settings.js
 // Assumes:
-// - Quill library is loaded globally.
-// - From quill-manager.js: initializeQuillEditor, syncAllQuillEditorsToHiddenInputs are global.
-// - From admin-utils.js: API_BASE_URL, contentArea, showLoading, apiCall, escapeHtml are global.
-// - From admin-modals.js: showAlert, showConfirm are global.
-// - From admin-main.js: dispatchAction is global.
+// - Quill library & quill-manager.js (initializeQuillEditor, syncAllQuillEditorsToHiddenInputs) are loaded globally.
+// - admin-utils.js (apiCall, showLoading, escapeHtml, contentArea) are global.
+// - admin-modals.js (showAlert) is global.
 
-let currentSiteSettings = {}; // Cache for original settings to get description or compare changes
+let originalSiteSettings = {}; // Stores the initial values of settings to detect changes
+let currentSiteSettingsMeta = {}; // Stores metadata like description for settings
+let changedSettingKeys = new Set(); // Stores keys of settings that have been changed by the user
 
-// --- Navigation entry point (called by admin-main.js via dispatchAction) ---
+// --- Navigation Entry Point (called by admin-main.js via dispatchAction) ---
 function showSiteSettingsPage() {
     loadAndRenderSiteSettings();
 }
 
 async function loadAndRenderSiteSettings() {
     if (typeof showLoading === 'function') showLoading();
-    else if (contentArea) contentArea.innerHTML = "<p>正在加载...</p>";
+    else if (contentArea) contentArea.innerHTML = "<p>正在加载设置...</p>";
 
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => {
         console.warn("escapeHtml function not found, using basic text passthrough.");
-        return text;
+        return text !== null && text !== undefined ? String(text) : '';
     };
 
     try {
-        const data = await apiCall('/api/admin/settings');
+        const data = await apiCall('/api/admin/settings'); // Fetch all settings
         
         if (!contentArea) {
             console.error("CRITICAL: contentArea not found for rendering site settings.");
@@ -32,179 +32,223 @@ async function loadAndRenderSiteSettings() {
         }
 
         if (data.success && data.settings) {
-            currentSiteSettings = {};
-            let settingsHtml = `
-                <div class="content-section">
-                    <h2><i class="fas fa-cogs"></i>Website Settings 网站设置</h2>
-                    <form id="siteSettingsForm" onsubmit="submitSiteSettings(event)">`;
-            
-            const usageGuideHtml = `
-                <div class="editor-usage-guide" style="padding: 10px 15px; background-color: #e9f5ff; border: 1px solid #b8d6f0; border-radius: 4px; margin-bottom: 15px; font-size: 0.9em;">
-                    <h4 style="margin-top:0; margin-bottom:5px; color: #005a9e;">编辑器使用说明:</h4>
-                    <ul style="margin:0; padding-left:20px; list-style-position: inside;">
-                        <li><strong>基本格式:</strong> 使用工具栏按钮进行文本加粗 (<b>B</b>), 斜体 (<i>I</i>), 下划线 (<u>U</u>)。</li>
-                        <li><strong>字号/颜色:</strong> 通过下拉菜单选择不同的字号和颜色。</li>
-                        <li><strong>对齐/列表:</strong> 使用对齐和列表按钮调整文本布局。</li>
-                        <li><strong>链接:</strong> 选中文字后点击链接图标创建超链接。</li>
-                        // <li><strong>图片/代码/公式:</strong> 通过对应图标插入网络图片、代码块或数学公式。</li>
-                        // <li><strong>清除格式:</strong> 移除所选文字的所有样式。</li>
-                    </ul>
-                </div>`;
+            originalSiteSettings = {}; // Reset original settings cache
+            currentSiteSettingsMeta = {}; // Reset metadata cache
+            changedSettingKeys.clear(); // Clear the set of changed keys
 
+            let settingsFormHtml = `<form id="siteSettingsForm" onsubmit="submitSiteSettings(event)">`;
+            
             if (data.settings.length === 0) {
-                settingsHtml += "<p>暂无可配置的网站设置项。</p>";
+                settingsFormHtml += "<p>暂无可配置的网站设置项。</p>";
             }
 
             data.settings.forEach(setting => {
-                currentSiteSettings[setting.setting_key] = setting;
+                originalSiteSettings[setting.setting_key] = setting.setting_value;
+                currentSiteSettingsMeta[setting.setting_key] = { description: setting.description, last_updated: setting.last_updated };
+
                 const settingKeyEsc = esc(setting.setting_key);
-                let descriptionHtml = esc(setting.description || setting.setting_key); // 默认使用英文描述
-
-                // 为特定的 setting_key 添加中文翻译
-                if (setting.setting_key === 'announcement_bar_html') {
-                    if (setting.description && setting.description.toLowerCase().includes('homepage announcement bar content')) {
-                         descriptionHtml = `
-                            ${esc(setting.description)}<br>
-                            <span style="font-weight:normal; color:#555;">首页公告栏内容 (允许 HTML)</span>
-                         `;
-                    } else { // 如果描述不是预期的，则只添加一个通用的中文
-                        descriptionHtml += `<br><span style="font-weight:normal; color:#555;">首页公告栏内容</span>`;
-                    }
-                }
-                // 你可以为其他 setting_key 添加类似的翻译逻辑
-                // else if (setting.setting_key === 'another_key') {
-                //     descriptionHtml = `${esc(setting.description)}<br><span style="font-weight:normal; color:#555;">另一个设置的中文描述</span>`;
-                // }
-
+                const descriptionEsc = esc(setting.description || setting.setting_key);
+                const originalValueEsc = esc(setting.setting_value); // Used for data-original-value
 
                 let fieldHtml = '';
-                const labelHtml = `
-                    <label for="setting_${settingKeyEsc}">${descriptionHtml} 
-                        (<small>Key: <code>${settingKeyEsc}</code></small>):
-                    </label>`;
-
                 if (setting.setting_key === 'announcement_bar_html') {
                     fieldHtml = `
-                        ${(setting.setting_key === 'announcement_bar_html' ? usageGuideHtml : '')}
-                        <div class="form-group-editor-wrapper">
-                            ${labelHtml}
-                            <div id="quill_editor_${settingKeyEsc}" class="quill-editor-instance" style="min-height: 150px; border: 1px solid #ccc; border-radius: 4px;"></div>
-                            <input type="hidden" id="setting_${settingKeyEsc}" name="${settingKeyEsc}">
-                        </div>`;
-                } else if (setting.setting_key === 'blog_post_requires_review') { // <--- 新增处理
-                    settingsHtml += `
-                        <select id="setting_${settingKeyEsc}" name="${settingKeyEsc}" class="form-control">
+                        <label for="quill_editor_${settingKeyEsc}">${descriptionEsc} 
+                            (<small>Key: <code>${settingKeyEsc}</code></small>):
+                        </label>
+                        <div id="quill_editor_${settingKeyEsc}" class="quill-editor-instance setting-input-field" data-key="${settingKeyEsc}"></div>
+                        <input type="hidden" id="setting_${settingKeyEsc}" name="${settingKeyEsc}" data-original-value="${originalValueEsc}">
+                    `;
+                } else if (setting.setting_key === 'blog_post_requires_review') {
+                    fieldHtml = `
+                        <label for="setting_${settingKeyEsc}">${descriptionEsc} 
+                            (<small>Key: <code>${settingKeyEsc}</code></small>):
+                        </label>
+                        <select id="setting_${settingKeyEsc}" name="${settingKeyEsc}" class="form-control setting-input-field" data-key="${settingKeyEsc}" data-original-value="${originalValueEsc}" onchange="handleSettingInputChange(this)">
                             <option value="true" ${setting.setting_value === 'true' ? 'selected' : ''}>是 (Yes) - 需要审核</option>
                             <option value="false" ${setting.setting_value === 'false' ? 'selected' : ''}>否 (No) - 直接发布</option>
-                        </select>`
-                }else if (String(setting.setting_key).endsWith('_json')) {
+                        </select>`;
+                } else if (String(setting.setting_key).endsWith('_json')) {
                     fieldHtml = `
-                        ${labelHtml}
-                        <textarea id="setting_${settingKeyEsc}" name="${settingKeyEsc}" class="form-control" rows="8" style="font-family: monospace;">${esc(setting.setting_value)}</textarea>
+                        <label for="setting_${settingKeyEsc}">${descriptionEsc} 
+                            (<small>Key: <code>${settingKeyEsc}</code></small>):
+                        </label>
+                        <textarea id="setting_${settingKeyEsc}" name="${settingKeyEsc}" class="form-control setting-input-field" data-key="${settingKeyEsc}" data-original-value="${originalValueEsc}" rows="8" style="font-family: monospace;" oninput="handleSettingInputChange(this)">${originalValueEsc}</textarea>
                         <small class="form-text text-muted">此内容应为有效的 JSON 字符串。</small>`;
                 } else { // Default to text input
                     fieldHtml = `
-                        ${labelHtml}
-                        <input type="text" id="setting_${settingKeyEsc}" name="${settingKeyEsc}" value="${esc(setting.setting_value)}" class="form-control">`;
+                        <label for="setting_${settingKeyEsc}">${descriptionEsc} 
+                            (<small>Key: <code>${settingKeyEsc}</code></small>):
+                        </label>
+                        <input type="text" id="setting_${settingKeyEsc}" name="${settingKeyEsc}" value="${originalValueEsc}" class="form-control setting-input-field" data-key="${settingKeyEsc}" data-original-value="${originalValueEsc}" oninput="handleSettingInputChange(this)">`;
                 }
 
-                settingsHtml += `
-                    <div class="form-group">
+                settingsFormHtml += `
+                    <div class="form-group" id="group_for_setting_${settingKeyEsc}"> <!-- Unique ID for form group -->
                         ${fieldHtml}
-                        <small class="form-text text-muted">最后更新：${new Date(setting.last_updated).toLocaleDateString()} ${new Date(setting.last_updated).toLocaleTimeString()}</small>
+                        <small class="form-text text-muted">最后更新：${new Date(setting.last_updated).toLocaleString()}</small>
                     </div>
-                    ${data.settings.indexOf(setting) < data.settings.length - 1 ? '<hr style="border-top: 1px dashed #eee; margin: 20px 0;">' : ''}`;
+                    ${data.settings.length > 1 ? '<hr style="border-top: 1px dashed #eee; margin: 20px 0;">' : ''}`;
             });
 
             if (data.settings.length > 0) {
-                 settingsHtml += `
+                 settingsFormHtml += `
                     <div class="form-actions">
-                        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> 保存所有更改</button>
+                        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> 保存已修改的设置</button>
                     </div>`;
             }
-            settingsHtml += `</form></div>`; // Close content-section
+            settingsFormHtml += `</form>`;
             
-            contentArea.innerHTML = settingsHtml;
+            const pageHeaderHtml = `
+                <h2><i class="fas fa-cogs"></i> 网站设置</h2>
+                <p class="settings-page-description">在这里管理网站的全局配置。只有被修改的设置项 (高亮显示) 才会在点击保存时提交更新。</p>
+            `;
+            contentArea.innerHTML = `<div class="content-section">${pageHeaderHtml}${settingsFormHtml}</div>`;
                 
+            // Initialize Quill editor(s) AFTER HTML is in DOM
             data.settings.forEach(setting => {
                 if (setting.setting_key === 'announcement_bar_html') {
                     const editorContainerSelector = `#quill_editor_${esc(setting.setting_key)}`;
                     const hiddenInputSelector = `#setting_${esc(setting.setting_key)}`;
                     if (typeof initializeQuillEditor === 'function') {
-                        initializeQuillEditor(
+                        const quillInstance = initializeQuillEditor(
                             editorContainerSelector, 
                             hiddenInputSelector, 
                             setting.setting_value, 
-                            'simple', 
+                            'simple', // Toolbar config key
                             '输入公告 HTML 内容...'
                         );
+                        // Add change listener specifically for Quill to update hidden input and detect changes
+                        if (quillInstance) {
+                            quillInstance.on('text-change', (delta, oldDelta, source) => {
+                                if (source === 'user') {
+                                    const hiddenInput = document.querySelector(hiddenInputSelector);
+                                    if (hiddenInput) {
+                                        hiddenInput.value = quillInstance.root.innerHTML;
+                                        handleSettingInputChange(hiddenInput); // Trigger change detection
+                                    }
+                                }
+                            });
+                        }
                     } else {
-                        console.error("initializeQuillEditor function not found. Quill manager might not be loaded.");
+                        console.error("initializeQuillEditor function not found from quill-manager.js.");
+                        const editorDiv = document.querySelector(editorContainerSelector);
+                        if(editorDiv) editorDiv.textContent = "Quill 编辑器加载失败。";
                     }
                 }
             });
 
         } else {
-            contentArea.innerHTML = '<div class="content-section"><p>无法加载网站设置或没有设置项。</p></div>';
+            contentArea.innerHTML = '<div class="content-section"><h2><i class="fas fa-cogs"></i> 网站设置</h2><p>无法加载网站设置或没有设置项。</p></div>';
             if (typeof showAlert === 'function') showAlert(data.message || '加载设置失败', '错误', 'error');
         }
     } catch (error) {
         console.error('Error loading site settings:', error);
-        contentArea.innerHTML = `<div class="content-section"><p>加载网站设置时发生严重错误：${error.message}</p></div>`;
+        contentArea.innerHTML = `<div class="content-section"><h2><i class="fas fa-cogs"></i> 网站设置</h2><p>加载网站设置时发生严重错误：${error.message}</p></div>`;
         if (typeof showAlert === 'function') showAlert(`加载网站设置出错：${error.message}`, '网络错误', 'error');
     }
 }
 
+function handleSettingInputChange(element) {
+    const key = element.name || element.dataset.key; // `name` for standard inputs, `data-key` for Quill's hidden input proxy
+    if (!key) {
+        console.warn("handleSettingInputChange called on element without a name or data-key:", element);
+        return;
+    }
+    
+    const originalValue = originalSiteSettings[key]; // Get original value from our cache
+    let currentValue = element.value;
+
+    // For Quill, element is the hidden input, its value is already HTML string.
+    // For standard inputs, element.value is fine.
+
+    const formGroupElement = document.getElementById(`group_for_setting_${escapeHtml(key)}`) || element.closest('.form-group');
+
+    // Normalize undefined/null to empty string for comparison, if originalValue could be null from DB
+    const normalizedOriginalValue = (originalValue === null || originalValue === undefined) ? "" : originalValue;
+    const normalizedCurrentValue = (currentValue === null || currentValue === undefined) ? "" : currentValue;
+
+    if (normalizedCurrentValue !== normalizedOriginalValue) {
+        changedSettingKeys.add(key);
+        if (formGroupElement) formGroupElement.classList.add('setting-changed');
+    } else {
+        changedSettingKeys.delete(key);
+        if (formGroupElement) formGroupElement.classList.remove('setting-changed');
+    }
+}
 
 async function submitSiteSettings(event) {
     event.preventDefault();
     
+    // Sync Quill editors one last time before checking changedSettingKeys
     if (typeof syncAllQuillEditorsToHiddenInputs === 'function') {
         syncAllQuillEditorsToHiddenInputs();
-    } else {
-        console.warn('syncAllQuillEditorsToHiddenInputs function is not available. Quill content might not be saved correctly.');
+        // After syncing, manually trigger change detection for any Quill-backed hidden inputs
+        // that might have been programmatically updated by syncAll.
+        document.querySelectorAll('.setting-input-field[data-key]').forEach(hiddenInput => {
+            // Check if it's a hidden input potentially linked to Quill (has data-key and is hidden)
+            if (hiddenInput.type === 'hidden' && originalSiteSettings.hasOwnProperty(hiddenInput.dataset.key)) {
+                 handleSettingInputChange(hiddenInput);
+            }
+        });
+    }
+
+    if (changedSettingKeys.size === 0) {
+        if (typeof showAlert === 'function') showAlert("没有检测到任何更改。", "提示", "info");
+        return;
+    }
+
+    const form = document.getElementById('siteSettingsForm');
+    if (!form) {
+        console.error("Site settings form not found for submission.");
+        return;
     }
     
-    const form = event.target;
-    const formData = new FormData(form);
-    
-    const settingsContainerForLoading = document.getElementById('siteSettingsContainer'); // Get a reference for loading
+    const settingsContainerForLoading = document.getElementById('siteSettingsContainer');
     if (settingsContainerForLoading && typeof showLoading === 'function') {
-        showLoading(settingsContainerForLoading); // Show loading within the settings area
+        showLoading(settingsContainerForLoading);
     }
 
     let updatePromises = [];
-    let attemptedUpdates = 0;
+    
+    changedSettingKeys.forEach(key => {
+        const formElement = form.elements[key]; // Get by name
+        if (formElement) {
+            const value = formElement.value;
+            const settingMeta = currentSiteSettingsMeta[key]; // Get description from metadata cache
+            let descriptionToSend = settingMeta ? settingMeta.description : null;
 
-    for (const [key, value] of formData.entries()) {
-        attemptedUpdates++;
-        const originalSetting = currentSiteSettings[key];
-        let descriptionToSend = originalSetting ? originalSetting.description : null;
+            console.log(`Submitting changed setting: ${key}`);
+            updatePromises.push(
+                apiCall(`/api/admin/settings/${key}`, 'PUT', { 
+                    value: value, 
+                    description: descriptionToSend 
+                }).catch(err => {
+                    console.error(`Error updating setting '${key}':`, err);
+                    if (typeof showAlert === 'function') {
+                        showAlert(`更新设置 '${key}' 失败：${err.message}`, '错误', 'error');
+                    }
+                    return { success: false, key: key, error: err.message }; 
+                })
+            );
+        } else {
+            console.warn(`Form element for changed key '${key}' not found.`);
+        }
+    });
 
-        // If you add an input field for description in the form, you'd get it here:
-        // const descriptionFromForm = formData.get(`description_${key}`); // Example if you had such a field
-        // if (descriptionFromForm !== undefined) descriptionToSend = descriptionFromForm;
-
-        updatePromises.push(
-            apiCall(`/api/admin/settings/${key}`, 'PUT', { 
-                value: value, 
-                description: descriptionToSend 
-            }).catch(err => { // Catch individual promise rejections to allow others to proceed
-                console.error(`Error updating setting '${key}':`, err);
-                if (typeof showAlert === 'function') {
-                    showAlert(`更新设置 '${key}' 失败：${err.message}`, '错误', 'error');
-                }
-                // Return a specific error object or null so Promise.allSettled can distinguish
-                return { success: false, key: key, error: err.message }; 
-            })
-        );
-    }
-
-    if (attemptedUpdates === 0) {
-        if (typeof showAlert === 'function') showAlert('没有可提交的设置项。', '提示', 'info');
-        loadAndRenderSiteSettings(); // Still reload to clear loading spinner if any
+    if (updatePromises.length === 0 && changedSettingKeys.size > 0) {
+        // This case might happen if changed keys were for elements not found in form.
+        console.warn("Changed keys were noted, but no corresponding form elements found to submit.");
+        if(typeof showAlert === 'function') showAlert("检测到更改但无法提交，请检查表单。", "提交错误", "error");
+        loadAndRenderSiteSettings(); // Reload to clear state
         return;
     }
+    if (updatePromises.length === 0 && changedSettingKeys.size === 0) {
+        // Already handled by the check at the beginning of the function.
+        // loadAndRenderSiteSettings(); // Reload to clear loading if it was shown
+        return;
+    }
+
 
     const results = await Promise.allSettled(updatePromises);
     
@@ -213,29 +257,27 @@ async function submitSiteSettings(event) {
 
     results.forEach(result => {
         if (result.status === 'fulfilled') {
-            // Check our custom success from catch block or apiCall's success
             if (result.value && result.value.success === true) {
                 successfulUpdates++;
-            } else if (result.value && result.value.success === false) { // Error caught and returned
+            } else if (result.value && result.value.success === false) {
                 failedKeys.push(result.value.key || '未知项');
             }
         } else if (result.status === 'rejected') {
-            // This case might not be hit if all apiCall rejections are caught above
-            console.error("Unhandled rejection in Promise.allSettled:", result.reason);
-            // Try to find the key if possible (would require more complex promise wrapping)
-            failedKeys.push('未知项 (Promise rejected)');
+            console.error("Unhandled rejection in settings update Promise.allSettled:", result.reason);
+            // This should ideally not be hit if all .catch blocks return an object
+            failedKeys.push(result.reason?.key || '未知项 (Promise 直接 rejected)');
         }
     });
 
     if (typeof showAlert === 'function') {
-        if (successfulUpdates === attemptedUpdates) {
-            showAlert('所有网站设置已成功保存！', '成功', 'success');
+        if (successfulUpdates === changedSettingKeys.size) { // Compare with attempted changes
+            showAlert('所有已修改的设置已成功保存！', '成功', 'success');
         } else if (successfulUpdates > 0) {
-            showAlert(`部分网站设置已保存 (${successfulUpdates}/${attemptedUpdates})。失败项：${failedKeys.join(', ')}`, '部分成功', 'warning');
-        } else {
-            showAlert(`所有设置 (${attemptedUpdates}项) 更新均失败。失败项：${failedKeys.join(', ')}`, '全部失败', 'error');
+            showAlert(`部分设置已保存 (${successfulUpdates}/${changedSettingKeys.size})。失败项：${failedKeys.join(', ')}`, '部分成功', 'warning');
+        } else if (changedSettingKeys.size > 0) {
+            showAlert(`所有已修改的设置 (${changedSettingKeys.size}项) 更新均失败。失败项：${failedKeys.join(', ')}`, '全部失败', 'error');
         }
     }
 
-    loadAndRenderSiteSettings(); // Always reload to show the latest state and clear loading
+    loadAndRenderSiteSettings(); // Reload to update original values and clear highlights/changedKeys set
 }
