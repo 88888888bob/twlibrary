@@ -12,14 +12,70 @@ let currentAdminPostFilters = { status: '', search: '' };
 // allFetchedAdminPosts 缓存当前页或当前筛选结果的文章，而不是所有文章
 let allFetchedAdminPosts = []; 
 
-// --- Navigation Entry Points ---
-// --- Navigation Entry Points ---
+// allFetchedAdminPosts 现在只缓存当前 API 调用返回的数据，而不是所有数据
+// 因为筛选和分页主要由后端处理
+let currentDisplayPosts = []; 
+
+const ADMIN_BLOG_ITEMS_PER_PAGE = 10; // 与后端分页的 limit 对应
+
+// --- Navigation Entry Point ---
 function showBlogPostsList(params = {}) {
-    // 从导航或外部调用设置初始筛选条件
-    currentAdminPostFilters.status = params.filters?.status || ''; 
-    currentAdminPostFilters.search = params.filters?.search || '';
-    currentAdminPostPage = 1; // 总是从第一页开始
-    loadAdminPostsAndCountsFromServer(); // 主加载函数
+    console.log("[AdminBlogPosts] showBlogPostsList called with params:", params);
+    currentAdminPostFilters.status = params.filters?.status || ''; // 从导航设置初始状态
+    currentAdminPostFilters.search = ''; // 每次从主导航进入时清除搜索
+    currentAdminPostPage = 1;
+    loadAdminPostsAndFramework(); // 主加载函数
+}
+
+// --- 主加载函数：获取文章数据和状态计数，并渲染 UI 框架 ---
+async function loadAdminPostsAndFramework() {
+    console.log("[AdminBlogPosts] loadAdminPostsAndFramework initiated.");
+    if (typeof showLoading === 'function') showLoading();
+    else if (contentArea) contentArea.innerHTML = "<p>正在初始化博客管理...</p>";
+
+    renderAdminBlogViewFramework(); // 先渲染 UI 骨架
+
+    // API 调用以获取数据和计数
+    let queryParams = new URLSearchParams({ 
+        page: 1, // 初始加载总是请求第一页
+        limit: ADMIN_BLOG_ITEMS_PER_PAGE,
+        admin_view: 'true'
+    });
+    // 初始加载时也带上当前激活的筛选条件
+    if (currentAdminPostFilters.status) queryParams.append('status', currentAdminPostFilters.status);
+    // 初始加载时，搜索框是空的，所以不传 search
+
+    console.log("[AdminBlogPosts] Fetching initial data and counts with params:", queryParams.toString());
+    try {
+        const response = await apiCall(`/api/blog/posts?${queryParams.toString()}`);
+        
+        if (response.success) {
+            console.log("[AdminBlogPosts] Initial data fetched successfully:", response);
+            if (response.statusCounts) {
+                updateStatusPillCounts(response.statusCounts);
+            } else {
+                console.warn("[AdminBlogPosts] API did not return statusCounts. Pill counts will be '(...)' or estimated.");
+                // 可以尝试基于返回的总数估算“全部”的数量，其他为 0
+                const placeholderCounts = {all: response.pagination?.totalItems || 0, published:0, draft:0, pending_review:0, archived:0};
+                updateStatusPillCounts(placeholderCounts);
+            }
+
+            currentDisplayPosts = response.data || [];
+            renderBlogPostsTable(currentDisplayPosts, document.getElementById('blogPostsTableContainer'));
+            renderPagination(response.pagination, document.getElementById('blogPostsPaginationContainer'), (newPage) => {
+                currentAdminPostPage = newPage;
+                loadPostsForCurrentFilters(); // 分页点击加载新数据
+            });
+        } else {
+            console.error("[AdminBlogPosts] Failed to load initial posts/counts:", response.message);
+            document.getElementById('blogPostsTableContainer').innerHTML = `<p class="error-message">无法加载文章列表：${response.message || '未知错误'}</p>`;
+            if (typeof showAlert === 'function') showAlert(response.message || '加载文章列表失败', '错误', 'error');
+        }
+    } catch (error) {
+        console.error("[AdminBlogPosts] Error in loadAdminPostsAndFramework:", error);
+        document.getElementById('blogPostsTableContainer').innerHTML = `<p class="error-message">加载文章列表时出错：${error.message}</p>`;
+        if (typeof showAlert === 'function') showAlert(`加载文章列表出错：${error.message}`, '网络错误', 'error');
+    }
 }
 
 // 主加载函数：获取文章数据和状态计数
@@ -73,8 +129,9 @@ async function loadAdminPostsAndCountsFromServer() {
 }
 
 
-// 渲染 UI 框架（状态按钮、搜索框、写文章按钮等）
+// --- 渲染 UI 框架（状态按钮、搜索框等） ---
 function renderAdminBlogViewFramework() {
+    console.log("[AdminBlogPosts] renderAdminBlogViewFramework called.");
     let sectionTitle = "博客文章列表";
     if (currentAdminPostFilters.status) {
         const statusMap = { 'published': '已发布文章', 'draft': '草稿箱', 'pending_review': '待审核文章', 'archived': '已归档文章' };
@@ -86,53 +143,99 @@ function renderAdminBlogViewFramework() {
         <div class="content-section">
             <h2><i class="fas fa-list-alt"></i> ${esc(sectionTitle)}</h2>
             <div class="list-filter-pills" id="adminPostStatusPills">
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === '' ? 'active' : ''}" onclick="setAdminPostStatusFilter('')">全部 (0)</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'published' ? 'active' : ''}" onclick="setAdminPostStatusFilter('published')">已发布 (0)</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'draft' ? 'active' : ''}" onclick="setAdminPostStatusFilter('draft')">草稿 (0)</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'pending_review' ? 'active' : ''}" onclick="setAdminPostStatusFilter('pending_review')">待审核 (0)</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'archived' ? 'active' : ''}" onclick="setAdminPostStatusFilter('archived')">已归档 (0)</button>
+                <button class="btn-filter-pill" onclick="setAdminPostStatusFilterAndLoad('')">全部 (...)</button>
+                <button class="btn-filter-pill" onclick="setAdminPostStatusFilterAndLoad('published')">已发布 (...)</button>
+                <button class="btn-filter-pill" onclick="setAdminPostStatusFilterAndLoad('draft')">草稿 (...)</button>
+                <button class="btn-filter-pill" onclick="setAdminPostStatusFilterAndLoad('pending_review')">待审核 (...)</button>
+                <button class="btn-filter-pill" onclick="setAdminPostStatusFilterAndLoad('archived')">已归档 (...)</button>
             </div>
             <div class="list-header" style="margin-top:15px;">
                 <button class="btn-add" onclick="navigateToBlogPostForm()"><i class="fas fa-plus"></i> 写新文章</button>
                 <div id="blogPostsFilters" class="search-container">
                     <input type="text" id="postSearchInputAdmin" placeholder="搜索标题/摘要..." value="${esc(currentAdminPostFilters.search || '')}">
-                    <button class="btn-search" onclick="applyAdminPostSearchFilter()"><i class="fas fa-search"></i> 搜索</button>
-                    <button class="btn-cancel" onclick="clearAdminPostSearchFilter()" title="清除搜索"><i class="fas fa-times"></i></button>
+                    <button class="btn-search" onclick="applyAdminPostSearchFilterAndLoad()"><i class="fas fa-search"></i> 搜索</button>
+                    <button class="btn-cancel" onclick="clearAdminPostSearchFilterAndLoad()" title="清除搜索"><i class="fas fa-times"></i></button>
                 </div>
             </div>
             <div id="blogPostsTableContainer"><div class="loading-placeholder"><p>正在准备列表...</p></div></div>
             <div id="blogPostsPaginationContainer"></div>
         </div>
     `;
-    document.getElementById('postSearchInputAdmin')?.addEventListener('keyup', event => {
-        if (event.key === "Enter") applyAdminPostSearchFilter();
-    });
+    const searchInput = document.getElementById('postSearchInputAdmin');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', event => {
+            if (event.key === "Enter") applyAdminPostSearchFilterAndLoad();
+        });
+    }
+    console.log("[AdminBlogPosts] UI Framework rendered.");
 }
 
-// 更新状态按钮上的计数，并设置激活状态
-function updateStatusPillCounts(counts = {}) {
-    const pillsContainer = document.getElementById('adminPostStatusPills');
-    if (!pillsContainer) return;
 
-    const updatePill = (statusValue, count) => {
-        const pill = pillsContainer.querySelector(`button[onclick*="setAdminPostStatusFilter('${statusValue}')"]`);
+// --- 更新状态按钮上的计数并设置激活状态 ---
+function updateStatusPillCounts(counts = {}) {
+    console.log("[AdminBlogPosts] updateStatusPillCounts called with counts:", counts);
+    const pillsContainer = document.getElementById('adminPostStatusPills');
+    if (!pillsContainer) {
+        console.warn("[AdminBlogPosts] Pills container not found for updating counts.");
+        return;
+    }
+
+    const updatePill = (statusValue, count, baseTextOverride = null) => {
+        const pillSelector = `button[onclick*="setAdminPostStatusFilterAndLoad('${statusValue}')"]`;
+        const pill = pillsContainer.querySelector(pillSelector);
         if (pill) {
-            // Extract current text before parenthesis
-            const baseText = pill.textContent.substring(0, pill.textContent.indexOf('(')).trim() || pill.textContent.trim();
+            const baseTextMatch = pill.textContent.match(/^([^(]+)\s*\(/);
+            const baseText = baseTextOverride || (baseTextMatch ? baseTextMatch[1].trim() : pill.textContent.trim());
             pill.textContent = `${baseText} (${count || 0})`;
+            
             if (currentAdminPostFilters.status === statusValue) {
                 pill.classList.add('active');
             } else {
                 pill.classList.remove('active');
             }
+        } else {
+            console.warn(`[AdminBlogPosts] Pill button not found for status: '${statusValue}' with selector: ${pillSelector}`);
         }
     };
-    updatePill('', counts.all);
-    updatePill('published', counts.published);
-    updatePill('draft', counts.draft);
-    updatePill('pending_review', counts.pending_review);
-    updatePill('archived', counts.archived);
+    updatePill('', counts.all, '全部');
+    updatePill('published', counts.published, '已发布');
+    updatePill('draft', counts.draft, '草稿');
+    updatePill('pending_review', counts.pending_review, '待审核');
+    updatePill('archived', counts.archived, '已归档');
+    console.log("[AdminBlogPosts] Pill counts updated.");
 }
+
+// --- 事件处理函数 (点击筛选按钮或搜索) ---
+function setAdminPostStatusFilterAndLoad(status) {
+    console.log(`[AdminBlogPosts] Status filter set to: '${status}'`);
+    currentAdminPostFilters.status = status;
+    // currentAdminPostFilters.search = ''; // 选择是否在切换状态时清除搜索
+    // const searchInput = document.getElementById('postSearchInputAdmin');
+    // if (searchInput) searchInput.value = '';
+    currentAdminPostPage = 1;
+    loadPostsForCurrentFilters(); // 从服务器加载此状态下的第一页数据
+}
+
+
+function applyAdminPostSearchFilterAndLoad() {
+    const searchInput = document.getElementById('postSearchInputAdmin');
+    currentAdminPostFilters.search = searchInput ? searchInput.value.trim() : '';
+    console.log(`[AdminBlogPosts] Search filter applied: '${currentAdminPostFilters.search}'`);
+    currentAdminPostPage = 1;
+    loadPostsForCurrentFilters();
+}
+
+
+
+function clearAdminPostSearchFilterAndLoad() {
+    console.log("[AdminBlogPosts] Search filter cleared.");
+    currentAdminPostFilters.search = '';
+    const searchInput = document.getElementById('postSearchInputAdmin');
+    if (searchInput) searchInput.value = '';
+    currentAdminPostPage = 1;
+    loadPostsForCurrentFilters();
+}
+
 
 
 // 新的主函数：获取所有文章（或一大批），然后渲染
@@ -173,46 +276,6 @@ async function fetchAllAdminPostsAndRender() {
         contentArea.innerHTML = `<div class="content-section"><h2>博客文章管理</h2><p>加载文章列表时出错：${error.message}</p></div>`;
         showAlert(`加载文章列表出错：${error.message}`, '网络错误', 'error');
     }
-}
-
-// 新的渲染函数，包含 UI 和筛选逻辑
-function renderAdminBlogView() {
-    let sectionTitle = "博客文章列表";
-    if (currentAdminPostFilters.status) {
-        const statusMap = { /* ... */ };
-        sectionTitle = statusMap[currentAdminPostFilters.status] || sectionTitle;
-    }
-    const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
-
-    contentArea.innerHTML = `
-        <div class="content-section">
-            <h2><i class="fas fa-list-alt"></i> ${esc(sectionTitle)}</h2>
-            <div class="list-filter-pills">
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === '' ? 'active' : ''}" onclick="filterAdminPostsByStatus('')">全部 (${allFetchedAdminPosts.length})</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'published' ? 'active' : ''}" onclick="filterAdminPostsByStatus('published')">已发布 (${allFetchedAdminPosts.filter(p=>p.status==='published').length})</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'draft' ? 'active' : ''}" onclick="filterAdminPostsByStatus('draft')">草稿 (${allFetchedAdminPosts.filter(p=>p.status==='draft').length})</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'pending_review' ? 'active' : ''}" onclick="filterAdminPostsByStatus('pending_review')">待审核 (${allFetchedAdminPosts.filter(p=>p.status==='pending_review').length})</button>
-                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'archived' ? 'active' : ''}" onclick="filterAdminPostsByStatus('archived')">已归档 (${allFetchedAdminPosts.filter(p=>p.status==='archived').length})</button>
-            </div>
-            <div class="list-header" style="margin-top:15px;">
-                <button class="btn-add" onclick="navigateToBlogPostForm()"><i class="fas fa-plus"></i> 写新文章</button>
-                <div id="blogPostsFilters" class="search-container">
-                    <input type="text" id="postSearchInputAdmin" placeholder="在当前列表搜索..." value="${esc(currentAdminPostFilters.search || '')}">
-                    <button class="btn-search" onclick="applyAdminPostSearchFilter(true)"><i class="fas fa-search"></i> 搜索</button>
-                    <button class="btn-cancel" onclick="clearAdminPostSearchFilter(true)" title="清除搜索"><i class="fas fa-times"></i></button>
-                </div>
-            </div>
-            <div id="blogPostsTableContainer"></div>
-            <div id="blogPostsPaginationContainer"></div>
-        </div>
-    `;
-
-    document.getElementById('postSearchInputAdmin')?.addEventListener('keyup', event => {
-        if (event.key === "Enter") applyAdminPostSearchFilter(true); // true to indicate client-side search
-    });
-
-    // 初始渲染或筛选后渲染
-    renderFilteredAndPaginatedPosts();
 }
 
 
@@ -419,45 +482,52 @@ function clearAdminPostSearchFilter() {
     loadPostsForCurrentFilters();
 }
 
-// 根据当前筛选条件和页码从服务器加载文章数据
+// --- 根据当前筛选条件和页码从服务器加载文章数据 ---
 async function loadPostsForCurrentFilters() {
+    console.log(`[AdminBlogPosts] loadPostsForCurrentFilters called. Page: ${currentAdminPostPage}, Filters:`, currentAdminPostFilters);
     const tableContainer = document.getElementById('blogPostsTableContainer');
     const paginationContainer = document.getElementById('blogPostsPaginationContainer');
-    if (!tableContainer || !paginationContainer) return;
+    if (!tableContainer || !paginationContainer) {
+        console.error("[AdminBlogPosts] Table or pagination container not found during filtered load.");
+        return;
+    }
 
-    if (typeof showLoading === 'function') showLoading(tableContainer); // 显示局部加载指示
+    if (typeof showLoading === 'function') showLoading(tableContainer);
     else tableContainer.innerHTML = '<div class="loading-placeholder"><p>正在加载文章...</p></div>';
     paginationContainer.innerHTML = '';
 
     let queryParams = new URLSearchParams({ 
         page: currentAdminPostPage, 
-        limit: 10, // 或者你的默认 limit
+        limit: ADMIN_BLOG_ITEMS_PER_PAGE,
         admin_view: 'true'
     });
     if (currentAdminPostFilters.status) queryParams.append('status', currentAdminPostFilters.status);
     if (currentAdminPostFilters.search) queryParams.append('search', currentAdminPostFilters.search);
     
+    console.log("[AdminBlogPosts] Fetching filtered data with params:", queryParams.toString());
     try {
         const response = await apiCall(`/api/blog/posts?${queryParams.toString()}`);
         if (response.success && response.data) {
-            allFetchedAdminPosts = response.data; // 更新缓存为当前页/筛选结果
-            renderBlogPostsTable(allFetchedAdminPosts, tableContainer);
+            console.log("[AdminBlogPosts] Filtered data fetched successfully:", response);
+            currentDisplayPosts = response.data;
+            renderBlogPostsTable(currentDisplayPosts, tableContainer);
             renderPagination(response.pagination, paginationContainer, (newPage) => {
                 currentAdminPostPage = newPage;
                 loadPostsForCurrentFilters(); // 分页点击也调用此函数
             });
-            // 如果 API 在每次筛选/分页时都返回 statusCounts，可以在这里更新
+            // 如果 API 在每次筛选时都返回全局状态计数，则更新
             if (response.statusCounts) {
-                updateStatusPillCounts(response.statusCounts);
+                 updateStatusPillCounts(response.statusCounts);
             }
         } else {
-            tableContainer.innerHTML = `<p>无法加载文章：${response.message || '未知错误'}</p>`;
-            showAlert(response.message || '加载文章失败', '错误', 'error');
+            console.error("[AdminBlogPosts] Failed to load filtered posts:", response.message);
+            tableContainer.innerHTML = `<p class="error-message">无法加载文章：${response.message || '未知错误'}</p>`;
+            if (typeof showAlert === 'function') showAlert(response.message || '加载文章失败', '错误', 'error');
         }
     } catch (error) {
-        console.error("Error in loadPostsForCurrentFilters:", error);
-        tableContainer.innerHTML = `<p>加载文章时发生网络错误：${error.message}</p>`;
-        showAlert(`加载文章出错：${error.message}`, '网络错误', 'error');
+        console.error("[AdminBlogPosts] Error in loadPostsForCurrentFilters:", error);
+        tableContainer.innerHTML = `<p class="error-message">加载文章时发生网络错误：${error.message}</p>`;
+        if (typeof showAlert === 'function') showAlert(`加载文章出错：${error.message}`, '网络错误', 'error');
     }
 }
 
@@ -679,7 +749,7 @@ async function renderBlogPostForm(postId = null) {
                             <input type="text" id="postBookIsbn" name="book_isbn" value="${esc(postData.book_isbn || '')}" placeholder="输入 ISBN 或书名搜索">
                             <button type="button" class="btn btn-search btn-sm" onclick="searchBookForPost()" style="margin-left:5px;"><i class="fas fa-search"></i></button>
                         </div>
-                        <div id="bookSearchResult" style="margin-top:5px; font-size:0.9em; color: green;">${postData.book_isbn ? `已关联: ${esc(postData.book_title || postData.book_isbn)}` : ''}</div>
+                        <div id="bookSearchResult" style="margin-top:5px; font-size:0.9em; color: green;">${postData.book_isbn ? `已关联：${esc(postData.book_title || postData.book_isbn)}` : ''}</div>
                     </div>
                     <div class="form-group half-width">
                         <label for="postFeaturedImageUrl">封面图片 URL (可选):</label>
@@ -696,11 +766,11 @@ async function renderBlogPostForm(postId = null) {
 
                 <div class="form-row">
                     <div class="form-group third-width">
-                        <label for="postStatus">状态:</label>
+                        <label for="postStatus">状态：</label>
                         <select id="postStatus" name="status">${statusSelectHtml}</select>
                     </div>
                     <div class="form-group third-width">
-                        <label for="postVisibility">可见性:</label>
+                        <label for="postVisibility">可见性：</label>
                         <select id="postVisibility" name="visibility">
                             <option value="public" ${postData.visibility === 'public' ? 'selected' : ''}>公开</option>
                             <option value="members_only" ${postData.visibility === 'members_only' ? 'selected' : ''}>仅会员</option>
@@ -708,7 +778,7 @@ async function renderBlogPostForm(postId = null) {
                         </select>
                     </div>
                     <div class="form-group third-width">
-                        <label for="postAllowComments">允许评论:</label>
+                        <label for="postAllowComments">允许评论：</label>
                         <select id="postAllowComments" name="allow_comments">
                             <option value="true" ${postData.allow_comments ? 'selected' : ''}>是</option>
                             <option value="false" ${!postData.allow_comments ? 'selected' : ''}>否</option>
@@ -836,7 +906,7 @@ async function promptChangePostStatus(postId, currentStatus) {
 
     const modalContentHtml = `
         <p>当前文章 (ID: ${postId}) 状态：<strong>${esc(currentStatus)}</strong></p>
-        <p>请选择新的状态:</p>
+        <p>请选择新的状态：</p>
         <select id="newPostStatusSelect" class="form-control" style="margin-top: 10px; margin-bottom: 20px; padding: 8px; width: 100%;">
             ${optionsHtml}
         </select>
