@@ -7,18 +7,133 @@
 let quillPostEditorInstance = null; // To hold the Quill instance for the post editor
 let availableTopicsCache = []; // Cache for topics to select from
 let currentEditingPostId = null; // To store the ID of the post being edited
-let allFetchedAdminPosts = []; // <--- 新增：缓存从 API 获取的所有文章
 let currentAdminPostPage = 1;
-let currentAdminPostFilters = { status: '', search: '' }; // status 用于标签筛选，search 用于搜索框
+let currentAdminPostFilters = { status: '', search: '' };
+// allFetchedAdminPosts 缓存当前页或当前筛选结果的文章，而不是所有文章
+let allFetchedAdminPosts = []; 
 
 // --- Navigation Entry Points ---
+// --- Navigation Entry Points ---
 function showBlogPostsList(params = {}) {
-    // params.filters.status 是从导航链接直接设置的初始状态筛选
+    // 从导航或外部调用设置初始筛选条件
     currentAdminPostFilters.status = params.filters?.status || ''; 
-    currentAdminPostFilters.search = ''; // 清除搜索词
-    currentAdminPostPage = 1;
-    fetchAllAdminPostsAndRender(); // <--- 修改为调用新的主函数
+    currentAdminPostFilters.search = params.filters?.search || '';
+    currentAdminPostPage = 1; // 总是从第一页开始
+    loadAdminPostsAndCountsFromServer(); // 主加载函数
 }
+
+// 主加载函数：获取文章数据和状态计数
+async function loadAdminPostsAndCountsFromServer() {
+    if (typeof showLoading === 'function') showLoading();
+    else if (contentArea) contentArea.innerHTML = "<p>加载中...</p>";
+
+    // 第一次加载或需要刷新框架和计数时调用此函数
+    // 它会获取当前筛选条件下的第一页数据，以及所有状态的计数
+    let queryParams = new URLSearchParams({ 
+        page: 1, // 初始加载总是请求第一页
+        limit: 10, // 或者你的默认 limit
+        admin_view: 'true' // 表明是管理员视图
+    });
+    // 带上当前激活的筛选条件去获取计数和第一页数据
+    if (currentAdminPostFilters.status) queryParams.append('status', currentAdminPostFilters.status);
+    if (currentAdminPostFilters.search) queryParams.append('search', currentAdminPostFilters.search);
+
+    try {
+        const response = await apiCall(`/api/blog/posts?${queryParams.toString()}`);
+        
+        if (response.success) {
+            renderAdminBlogViewFramework(); // 渲染 UI 框架（按钮、搜索框）
+            if (response.statusCounts) { // 确保后端返回了 statusCounts
+                updateStatusPillCounts(response.statusCounts); // 更新状态按钮上的计数
+            } else { // 如果后端没返回，就基于当前页数据估算或显示 0
+                const tempCounts = { all:0, published:0, draft:0, pending_review:0, archived:0 };
+                if(response.data) { // 粗略计数，不准确
+                    tempCounts.all = response.pagination?.totalItems || response.data.length;
+                    // 如果需要更准确的 pill count，即使后端不单独返回，前端也可以通过多次请求各 status 来获取，但不推荐
+                }
+                updateStatusPillCounts(tempCounts);
+                console.warn("API did not return statusCounts. Pill counts might be inaccurate or based on current page only.");
+            }
+
+            allFetchedAdminPosts = response.data || []; // 缓存第一页的数据
+            renderBlogPostsTable(allFetchedAdminPosts, document.getElementById('blogPostsTableContainer'));
+            renderPagination(response.pagination, document.getElementById('blogPostsPaginationContainer'), (newPage) => {
+                currentAdminPostPage = newPage;
+                loadPostsForCurrentFilters(); // 分页点击只加载数据
+            });
+        } else {
+            contentArea.innerHTML = `<div class="content-section"><h2>博客文章管理</h2><p>无法加载文章列表：${response.message || '未知错误'}</p></div>`;
+            showAlert(response.message || '加载文章列表失败', '错误', 'error');
+        }
+    } catch (error) {
+        console.error("Error in loadAdminPostsAndCountsFromServer:", error);
+        contentArea.innerHTML = `<div class="content-section"><h2>博客文章管理</h2><p>加载文章列表时出错：${error.message}</p></div>`;
+        showAlert(`加载文章列表出错：${error.message}`, '网络错误', 'error');
+    }
+}
+
+
+// 渲染 UI 框架（状态按钮、搜索框、写文章按钮等）
+function renderAdminBlogViewFramework() {
+    let sectionTitle = "博客文章列表";
+    if (currentAdminPostFilters.status) {
+        const statusMap = { 'published': '已发布文章', 'draft': '草稿箱', 'pending_review': '待审核文章', 'archived': '已归档文章' };
+        sectionTitle = statusMap[currentAdminPostFilters.status] || sectionTitle;
+    }
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
+
+    contentArea.innerHTML = `
+        <div class="content-section">
+            <h2><i class="fas fa-list-alt"></i> ${esc(sectionTitle)}</h2>
+            <div class="list-filter-pills" id="adminPostStatusPills">
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === '' ? 'active' : ''}" onclick="setAdminPostStatusFilter('')">全部 (0)</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'published' ? 'active' : ''}" onclick="setAdminPostStatusFilter('published')">已发布 (0)</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'draft' ? 'active' : ''}" onclick="setAdminPostStatusFilter('draft')">草稿 (0)</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'pending_review' ? 'active' : ''}" onclick="setAdminPostStatusFilter('pending_review')">待审核 (0)</button>
+                <button class="btn-filter-pill ${currentAdminPostFilters.status === 'archived' ? 'active' : ''}" onclick="setAdminPostStatusFilter('archived')">已归档 (0)</button>
+            </div>
+            <div class="list-header" style="margin-top:15px;">
+                <button class="btn-add" onclick="navigateToBlogPostForm()"><i class="fas fa-plus"></i> 写新文章</button>
+                <div id="blogPostsFilters" class="search-container">
+                    <input type="text" id="postSearchInputAdmin" placeholder="搜索标题/摘要..." value="${esc(currentAdminPostFilters.search || '')}">
+                    <button class="btn-search" onclick="applyAdminPostSearchFilter()"><i class="fas fa-search"></i> 搜索</button>
+                    <button class="btn-cancel" onclick="clearAdminPostSearchFilter()" title="清除搜索"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div id="blogPostsTableContainer"><div class="loading-placeholder"><p>正在准备列表...</p></div></div>
+            <div id="blogPostsPaginationContainer"></div>
+        </div>
+    `;
+    document.getElementById('postSearchInputAdmin')?.addEventListener('keyup', event => {
+        if (event.key === "Enter") applyAdminPostSearchFilter();
+    });
+}
+
+// 更新状态按钮上的计数，并设置激活状态
+function updateStatusPillCounts(counts = {}) {
+    const pillsContainer = document.getElementById('adminPostStatusPills');
+    if (!pillsContainer) return;
+
+    const updatePill = (statusValue, count) => {
+        const pill = pillsContainer.querySelector(`button[onclick*="setAdminPostStatusFilter('${statusValue}')"]`);
+        if (pill) {
+            // Extract current text before parenthesis
+            const baseText = pill.textContent.substring(0, pill.textContent.indexOf('(')).trim() || pill.textContent.trim();
+            pill.textContent = `${baseText} (${count || 0})`;
+            if (currentAdminPostFilters.status === statusValue) {
+                pill.classList.add('active');
+            } else {
+                pill.classList.remove('active');
+            }
+        }
+    };
+    updatePill('', counts.all);
+    updatePill('published', counts.published);
+    updatePill('draft', counts.draft);
+    updatePill('pending_review', counts.pending_review);
+    updatePill('archived', counts.archived);
+}
+
 
 // 新的主函数：获取所有文章（或一大批），然后渲染
 async function fetchAllAdminPostsAndRender() {
@@ -269,26 +384,81 @@ async function loadAndRenderBlogPosts() { // 不再直接接收 page 和 filters
     }
 }
 
-// 新的筛选函数
+// 当点击状态筛选按钮时
 function setAdminPostStatusFilter(status) {
     currentAdminPostFilters.status = status;
-    currentAdminPostPage = 1; // 切换状态时重置到第一页
-    loadAndRenderBlogPosts();
+    // currentAdminPostFilters.search = ''; // 通常切换状态时会清除搜索，或保留当前搜索
+    // const searchInput = document.getElementById('postSearchInputAdmin');
+    // if(searchInput) searchInput.value = '';
+    currentAdminPostPage = 1; // 重置到第一页
+    loadPostsForCurrentFilters(); // 从服务器加载此状态下的第一页数据
+    // 同时，按钮的激活状态会在 loadPostsForCurrentFilters 成功后，通过 updateStatusPillCounts 更新
+    // (如果 API 也返回了 statusCounts) 或者在这里手动更新一次按钮的 active class
+    const pillsContainer = document.getElementById('adminPostStatusPills');
+    if(pillsContainer){
+        pillsContainer.querySelectorAll('.btn-filter-pill').forEach(p => p.classList.remove('active'));
+        const activePill = pillsContainer.querySelector(`button[onclick*="setAdminPostStatusFilter('${status}')"]`);
+        if(activePill) activePill.classList.add('active');
+    }
 }
 
+// 当点击搜索按钮或回车时
 function applyAdminPostSearchFilter() {
-    const searchInput = document.getElementById('postSearchInput');
+    const searchInput = document.getElementById('postSearchInputAdmin');
     currentAdminPostFilters.search = searchInput ? searchInput.value.trim() : '';
     currentAdminPostPage = 1;
-    loadAndRenderBlogPosts();
+    loadPostsForCurrentFilters();
 }
 
+// 当点击清除搜索按钮时
 function clearAdminPostSearchFilter() {
     currentAdminPostFilters.search = '';
-    const searchInput = document.getElementById('postSearchInput');
+    const searchInput = document.getElementById('postSearchInputAdmin');
     if (searchInput) searchInput.value = '';
     currentAdminPostPage = 1;
-    loadAndRenderBlogPosts();
+    loadPostsForCurrentFilters();
+}
+
+// 根据当前筛选条件和页码从服务器加载文章数据
+async function loadPostsForCurrentFilters() {
+    const tableContainer = document.getElementById('blogPostsTableContainer');
+    const paginationContainer = document.getElementById('blogPostsPaginationContainer');
+    if (!tableContainer || !paginationContainer) return;
+
+    if (typeof showLoading === 'function') showLoading(tableContainer); // 显示局部加载指示
+    else tableContainer.innerHTML = '<div class="loading-placeholder"><p>正在加载文章...</p></div>';
+    paginationContainer.innerHTML = '';
+
+    let queryParams = new URLSearchParams({ 
+        page: currentAdminPostPage, 
+        limit: 10, // 或者你的默认 limit
+        admin_view: 'true'
+    });
+    if (currentAdminPostFilters.status) queryParams.append('status', currentAdminPostFilters.status);
+    if (currentAdminPostFilters.search) queryParams.append('search', currentAdminPostFilters.search);
+    
+    try {
+        const response = await apiCall(`/api/blog/posts?${queryParams.toString()}`);
+        if (response.success && response.data) {
+            allFetchedAdminPosts = response.data; // 更新缓存为当前页/筛选结果
+            renderBlogPostsTable(allFetchedAdminPosts, tableContainer);
+            renderPagination(response.pagination, paginationContainer, (newPage) => {
+                currentAdminPostPage = newPage;
+                loadPostsForCurrentFilters(); // 分页点击也调用此函数
+            });
+            // 如果 API 在每次筛选/分页时都返回 statusCounts，可以在这里更新
+            if (response.statusCounts) {
+                updateStatusPillCounts(response.statusCounts);
+            }
+        } else {
+            tableContainer.innerHTML = `<p>无法加载文章：${response.message || '未知错误'}</p>`;
+            showAlert(response.message || '加载文章失败', '错误', 'error');
+        }
+    } catch (error) {
+        console.error("Error in loadPostsForCurrentFilters:", error);
+        tableContainer.innerHTML = `<p>加载文章时发生网络错误：${error.message}</p>`;
+        showAlert(`加载文章出错：${error.message}`, '网络错误', 'error');
+    }
 }
 
 // 修改 applyPostFilters 以适应 Admin 后台
