@@ -924,11 +924,12 @@ async function promptChangePostStatus(postId, currentStatus) {
                         const response = await apiCall(`/api/admin/blog/posts/${postId}/status`, 'PUT', { status: newStatus });
                         if (response.success) {
                             showAlert('文章状态更新成功！', '成功', 'success');
-                            // 刷新当前的文章列表 (需要知道当前的筛选条件和页码)
-                            // 简单起见，先直接调用，但这会重置筛选和分页
-                            const currentFilters = getCurrentAdminPostFilters(); // 你需要实现这个
-                            const currentPageNum = getCurrentAdminPostPage(); // 你需要实现这个
-                            loadAndRenderBlogPosts(currentPageNum, currentFilters); 
+                            console.log(`[AdminBlogPosts] Status updated. Reloading admin posts and counts.`);
+                            // 不再需要 getCurrentAdminPostFilters 和 getCurrentAdminPostPage
+                            // 因为 loadAdminPostsAndCountsFromServer 会使用 currentAdminPostFilters
+                            // 并且通常会重置到第一页，或者你可以让它保持当前页如果 API 支持
+                            currentAdminPostPage = 1; // 通常更新后回到第一页
+                            loadAdminPostsAndCountsFromServer(); // <--- 调用这个函
                         } else {
                             showAlert(`状态更新失败：${response.message}`, '错误', 'error');
                         }
