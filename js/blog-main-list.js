@@ -105,7 +105,7 @@ function renderBlogPosts(posts) {
                     </div>
                     <h2 class="post-title">
                         <a href="blog-post.html?id=${post.id}" class="post-title-link">${esc(post.title)}</a>
-                        ${featuredStar} {/* <--- 星标加在标题旁边 --- */}
+                        ${featuredStar}
                     </h2>
                     ${post.excerpt ? `<p class="post-excerpt-text">${esc(post.excerpt)}</p>` : ''}
                     ${post.book_title ? `<p class="post-book-association"><i class="fas fa-book-open"></i> 评《<a href="blog.html?book_isbn=${esc(post.book_isbn)}">${esc(post.book_title)}</a>》</p>` : ''}

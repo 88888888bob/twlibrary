@@ -110,7 +110,7 @@ function renderPostDetail(post) {
             ${editButtonHtml}
         </div>
         <header class="post-detail-header">
-            <h1>${esc(post.title)}${featuredStarDetail}</h1> {/* <--- 星标加在标题旁边 --- */}
+            <h1>${esc(post.title)}${featuredStarDetail}</h1>
             <div class="post-detail-meta">
                 <span class="meta-item author"><i class="fas fa-user"></i> ${esc(post.author_username || '匿名作者')}</span>
                 <span class="meta-item published-date"><i class="fas fa-calendar-alt"></i> 发布于：${publishedDate}</span>
@@ -128,7 +128,6 @@ function renderPostDetail(post) {
         </div>
         <div class="post-actions-footer">
             ${likeButtonHtml}
-            {/* 编辑按钮也可以考虑放在这里 */}
         </div>
     `;
     container.innerHTML = postHtml;
