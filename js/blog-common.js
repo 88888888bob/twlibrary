@@ -185,3 +185,17 @@ async function checkUserLoginStatus() {
         return null;
     }
 }
+
+
+function formatUtcToLocalDateCommon(utcDateTimeString, dateOnly = false, options = null) {
+    // ... (与 admin-utils.js 中的实现相同或类似)
+    if (!utcDateTimeString) return '-';
+    try {
+        let isoString = String(utcDateTimeString).replace(' ', 'T');
+        if (!isoString.endsWith('Z') && !isoString.includes('+') && !isoString.includes('-')) isoString += 'Z';
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return utcDateTimeString;
+        if (dateOnly) return date.toLocaleDateString(navigator.language || 'zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        return date.toLocaleString(navigator.language || 'zh-CN', options || { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return utcDateTimeString; }
+}

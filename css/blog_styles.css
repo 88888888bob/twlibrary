@@ -141,3 +141,33 @@ figure { margin: 0 0 1em 0; } figcaption { font-size: 0.9em; color: var(--light-
     font-size: 0.875rem;
     border-radius: 0.2rem;
 }
+
+/* css/blog_styles.css */
+/* ... (之前的样式) ... */
+
+/* 文章卡片中推荐星标 (如果之前已有 featured-badge，可以复用或调整) */
+.post-card-item .post-title .featured-star-public {
+    color: #ffc107; /* 金黄色 */
+    font-size: 0.7em; /* 相对于标题的字号 */
+    margin-left: 8px;
+    vertical-align: middle; /* 或 super, top，根据视觉效果调整 */
+}
+.post-card-item.featured-post-card .post-title-link {
+    /* 可以给推荐文章的标题加一点点缀，如果星标不够明显 */
+    /* color: #0056b3; */
+}
+
+/* 文章详情页标题中的推荐星标 */
+.post-detail-header h1 .featured-star-public {
+    color: #ffc107;
+    font-size: 0.6em; /* 相对于 H1 标题的字号 */
+    margin-left: 10px;
+    vertical-align: middle; /* 或者尝试 top, super */
+}
+
+/* 如果之前为卡片添加了 .featured-post-card 类，确保其样式能突出显示 */
+.post-card-item.featured-post-card {
+    border-left: 5px solid #ffc107; /* 左侧加一个黄色边框 */
+    /* 或者其他你喜欢的强调样式 */
+    /* background-color: #fffcf2; */
+}

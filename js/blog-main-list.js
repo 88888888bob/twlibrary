@@ -69,10 +69,13 @@ async function loadBlogPosts() {
 
 function renderBlogPosts(posts) {
     const listContainer = document.getElementById('blogPostsListContainer');
-    if (!listContainer) return;
+    if (!listContainer) {
+        console.error("[BlogMainList] listContainer not found for rendering posts.");
+        return;
+    }
 
     if (!posts || posts.length === 0) {
-        listContainer.innerHTML = '<p style="text-align:center; padding: 20px;">暂无文章。</p>';
+        listContainer.innerHTML = '<p style="text-align:center; padding: 20px;">暂无符合条件的文章。</p>';
         return;
     }
 
@@ -80,25 +83,30 @@ function renderBlogPosts(posts) {
     let postsHtml = '';
 
     posts.forEach(post => {
-        // Determine author display name
         const authorName = esc(post.author_username || '匿名作者');
-        // Format topics
         const topicsHtml = post.topics && post.topics.length > 0 
             ? post.topics.map(topic => `<a href="blog.html?topic_id=${topic.id}" class="topic-tag">${esc(topic.name)}</a>`).join(' ')
-            : '未分类';
-        // Format date
+            : ''; // 如果没有话题，则不显示“未分类”
         const publishedDate = post.published_date || (post.published_at_formatted ? post.published_at_formatted.split(' ')[0] : '未知日期');
+        
+        // 为推荐文章的卡片添加 'featured-post-card' 类
+        // 在标题旁边添加星标
+        const featuredClass = post.is_featured ? 'featured-post-card' : '';
+        const featuredStar = post.is_featured ? '<span class="featured-star-public" title="推荐文章"><i class="fas fa-star"></i></span>' : '';
 
         postsHtml += `
-            <article class="post-card-item">
+            <article class="post-card-item ${featuredClass}">
                 ${post.featured_image_url ? `<a href="blog-post.html?id=${post.id}" class="post-thumbnail-link"><img src="${esc(post.featured_image_url)}" alt="${esc(post.title)}" class="post-thumbnail"></a>` : ''}
                 <div class="post-card-content">
                     <div class="post-meta-info">
                         <span class="meta-item post-author"><i class="fas fa-user"></i> ${authorName}</span>
                         <span class="meta-item post-date"><i class="fas fa-calendar-alt"></i> ${publishedDate}</span>
-                        <span class="meta-item post-topics-meta"><i class="fas fa-tags"></i> ${topicsHtml}</span>
+                        ${topicsHtml ? `<span class="meta-item post-topics-meta"><i class="fas fa-tags"></i> ${topicsHtml}</span>` : ''}
                     </div>
-                    <h2 class="post-title"><a href="blog-post.html?id=${post.id}" class="post-title-link">${esc(post.title)}</a></h2>
+                    <h2 class="post-title">
+                        <a href="blog-post.html?id=${post.id}" class="post-title-link">${esc(post.title)}</a>
+                        ${featuredStar} {/* <--- 星标加在标题旁边 --- */}
+                    </h2>
                     ${post.excerpt ? `<p class="post-excerpt-text">${esc(post.excerpt)}</p>` : ''}
                     ${post.book_title ? `<p class="post-book-association"><i class="fas fa-book-open"></i> 评《<a href="blog.html?book_isbn=${esc(post.book_isbn)}">${esc(post.book_title)}</a>》</p>` : ''}
                 </div>

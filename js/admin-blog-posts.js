@@ -558,10 +558,17 @@ function applyPostFilters() {
 }
 
 function renderBlogPostsTable(posts, container) {
-    if (!posts || posts.length === 0) {
+    console.log("[AdminBlogPosts] renderBlogPostsTable called with posts:", posts);
+    if (!posts || !container) {
+        console.error("[AdminBlogPosts] renderBlogPostsTable: Invalid posts data or container.");
+        if (container) container.innerHTML = "<p>加载文章数据时出错或没有文章。</p>";
+        return;
+    }
+    if (posts.length === 0) {
         container.innerHTML = "<p>没有找到符合条件的文章。</p>";
         return;
     }
+
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
 
     let tableHtml = `
@@ -571,32 +578,44 @@ function renderBlogPostsTable(posts, container) {
                     <th>ID</th>
                     <th>标题</th>
                     <th>作者</th>
-                    <th>关联书籍</th>
-                    <th>话题</th>
                     <th>状态</th>
                     <th>发布日期</th>
+                    <th>最后修改</th>
                     <th>操作</th>
                 </tr>
             </thead>
             <tbody>`;
     posts.forEach(post => {
+        const displayUpdatedAt = post.updated_at_formatted ? formatUtcToLocalDate(post.updated_at_formatted) : '-';
+        const displayPublishedDate = post.published_date ? formatUtcToLocalDate(post.published_date, true) : '-';
+        // (确保 post.author_username 是从后端获取的，可能是 post.author_actual_username 或 post.post_author_username_on_post_table)
+        const authorDisplayName = esc(post.author_username || post.author_actual_username || post.post_author_username_on_post_table || 'N/A');
+
+
         tableHtml += `
-            <tr>
+            <tr class="${post.is_featured ? 'featured-row' : ''}">
                 <td>${post.id}</td>
-                <td>${esc(post.title)} ${post.is_featured ? '<i class="fas fa-star" title="已推荐" style="color:orange;"></i>':''}</td>
-                <td>${esc(post.author_username || 'N/A')}</td>
-                <td>${post.book_isbn ? `${esc(post.book_title || '未知')} (${esc(post.book_isbn)})` : '-'}</td>
-                <td>${(post.topics && post.topics.length > 0) ? post.topics.map(t => esc(t.name)).join(', ') : '-'}</td>
+                <td class="${post.is_featured ? 'featured-post-title-cell' : ''}">${esc(post.title)} ${post.is_featured ? '<i class="fas fa-star" title="已推荐" style="color: #ffc107;"></i>':''}</td>
+                <td>${authorDisplayName}</td>
                 <td><span class="status-badge status-${esc(post.status)}">${esc(post.status)}</span></td>
-                <td>${post.published_date || '-'}</td>
-                <td>
-                    <button class="btn-edit btn-sm" onclick="navigateToBlogPostForm(${post.id})"><i class="fas fa-edit"></i></button>
-                    <button class="btn-info btn-sm" onclick="promptChangePostStatus(${post.id}, '${esc(post.status)}')"><i class="fas fa-sync-alt"></i></button>
-                    <button class="btn-warning btn-sm" onclick="togglePostFeature(${post.id}, ${post.is_featured})">
-                        <i class="fas ${post.is_featured ? 'fa-star-slash' : 'fa-star'}"></i> ${post.is_featured ? '取消推荐' : '设为推荐'}
+                <td>${displayPublishedDate}</td>
+                <td>${displayUpdatedAt}</td>
+                <td class="actions-cell">
+                    <button class="btn-icon btn-edit btn-sm" onclick="navigateToBlogPostForm(${post.id})" title="编辑">
+                        <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete btn-sm" onclick="confirmDeleteBlogPost(${post.id})"><i class="fas fa-trash"></i></button>
-                    <button class="btn-secondary btn-sm" onclick="previewBlogPost(${post.id})" title="预览"><i class="fas fa-eye"></i></button> 
+                    <button class="btn-icon btn-info btn-sm" onclick="promptChangePostStatus(${post.id}, '${esc(post.status)}')" title="修改状态">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="btn-icon btn-warning btn-sm" onclick="togglePostFeature(${post.id}, ${post.is_featured ? 'true' : 'false'})" title="${post.is_featured ? '取消推荐' : '设为推荐'}">
+                        <i class="fas ${post.is_featured ? 'fa-star-slash' : 'fa-star'}"></i>
+                    </button>
+                    <button class="btn-icon btn-delete btn-sm" onclick="confirmDeleteBlogPost(${post.id})" title="删除">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="btn-icon btn-secondary btn-sm" onclick="previewBlogPost('${post.slug || post.id}')" title="预览">
+                        <i class="fas fa-eye"></i>
+                    </button> 
                 </td>
             </tr>`;
     });

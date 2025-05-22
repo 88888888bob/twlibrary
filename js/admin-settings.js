@@ -86,7 +86,7 @@ async function loadAndRenderSiteSettings() {
                 settingsFormHtml += `
                     <div class="form-group" id="group_for_setting_${settingKeyEsc}"> <!-- Unique ID for form group -->
                         ${fieldHtml}
-                        <small class="form-text text-muted">最后更新：${new Date(setting.last_updated).toLocaleString()}</small>
+                        <small class="form-text text-muted">最后更新：${formatUtcToLocalDate(setting.last_updated)}</small>
                     </div>
                     ${data.settings.length > 1 ? '<hr style="border-top: 1px dashed #eee; margin: 20px 0;">' : ''}`;
             });

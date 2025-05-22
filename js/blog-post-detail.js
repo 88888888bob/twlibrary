@@ -71,84 +71,74 @@ async function loadPostDetail() {
 
 function renderPostDetail(post) {
     const container = document.getElementById('postDetailContainer');
+    if (!container) {
+        console.error("[BlogPostDetail] Container not found for rendering post detail.");
+        return;
+    }
     const esc = typeof escapeHTML === 'function' ? escapeHTML : (text) => text;
     
-    document.title = `${esc(post.title)} - 同文学校图书馆`; // 更新页面标题
+    document.title = `${esc(post.title)} - 同文学校图书馆`;
 
-    // 日期格式化 (可以更复杂)
-    const publishedDate = post.published_at ? new Date(post.published_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : '未发布';
-    const updatedDate = new Date(post.updated_at).toLocaleDateString('zh-CN');
+    const publishedDate = post.published_at ? formatUtcToLocalDateCommon(post.published_at, false, { year: 'numeric', month: 'long', day: 'numeric' }) : '未发布';
+    const updatedDate = post.updated_at ? formatUtcToLocalDateCommon(post.updated_at, false, { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
-    // 话题 HTML
-    let topicsHtml = '';
+    let topicsHtml = '<span>无</span>';
     if (post.topics && post.topics.length > 0) {
         topicsHtml = post.topics.map(topic => 
             `<a href="blog.html?topic_id=${topic.id}" class="tag-link">${esc(topic.name)}</a>`
         ).join(' ');
-    } else {
-        topicsHtml = '<span>无</span>';
     }
 
-    // 关联书籍 HTML
     let bookHtml = '';
     if (post.book_isbn && post.book_title) {
         bookHtml = `<a href="blog.html?book_isbn=${esc(post.book_isbn)}" class="book-link">《${esc(post.book_title)}》 (ISBN: ${esc(post.book_isbn)})</a>`;
     }
 
-    // 编辑按钮 (仅当登录用户是作者或管理员时显示)
     let editButtonHtml = '';
     if (currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin')) {
-        editButtonHtml = `<a href="blog-submit.html?postId=${post.id}" class="edit-post-link btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i> 编辑文章</a>`;
+        editButtonHtml = `<a href="blog-submit.html?postId=${post.id}" class="edit-post-link btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i> 编辑</a>`;
     }
     
-    // 点赞按钮 HTML (初始状态，未来 JS 会更新)
-    // let likeButtonHtml = `<button class="like-button" id="likeBtn" data-post-id="${post.id}"><i class="far fa-thumbs-up"></i> 点赞 (<span id="likeCount">${post.like_count || 0}</span>)</button>`;
-    // 在 blog-post-detail.js 中添加以下函数和事件监听器
-    let likeButtonHtml = `<button class="like-button" id="likeBtn" data-post-id="${post.id}">
-                            <i class="far fa-thumbs-up"></i> 点赞 (<span id="likeCount">${post.like_count || 0}</span>)
-                          </button>`;
-    
-    // 如果你的 like_count 属性在 post 对象中就是 `like_count`
-    // 确保这个 ID `likeCount` 也在你的 button HTML 中
+    let likeButtonHtml = `<button class="like-button" id="likeBtn" data-post-id="${post.id}">...</button>`; // 保持不变
+
+    // 星标显示
+    const featuredStarDetail = post.is_featured ? '<span class="featured-star-public" title="推荐文章" style="margin-left: 10px; font-size: 0.8em;"><i class="fas fa-star"></i></span>' : '';
 
     const postHtml = `
-        <div style="margin-bottom: 20px;">
-                <a href="blog.html" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> 返回博客列表</a>
-                ${editButtonHtml ? `<span style="float:right;">${editButtonHtml}</span>` : ''} 
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <a href="blog.html" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> 返回博客列表</a>
+            ${editButtonHtml}
         </div>
         <header class="post-detail-header">
-            <h1>${esc(post.title)}</h1>
+            <h1>${esc(post.title)}${featuredStarDetail}</h1> {/* <--- 星标加在标题旁边 --- */}
             <div class="post-detail-meta">
                 <span class="meta-item author"><i class="fas fa-user"></i> ${esc(post.author_username || '匿名作者')}</span>
                 <span class="meta-item published-date"><i class="fas fa-calendar-alt"></i> 发布于：${publishedDate}</span>
-                ${post.updated_at !== post.created_at ? `<span class="meta-item updated-date"><i class="fas fa-history"></i> 更新于：${updatedDate}</span>` : ''}
+                ${updatedDate && (new Date(post.updated_at) > new Date(post.created_at)) ? `<span class="meta-item updated-date"><i class="fas fa-history"></i> 更新于：${updatedDate}</span>` : ''}
                 <span class="meta-item views"><i class="fas fa-eye"></i> ${post.view_count || 0} 次阅读</span>
             </div>
         </header>
         <div class="post-content-area" id="postContentActual">
-            ${post.content} <!-- 内容来自 Quill，后端已清理，前端直接渲染 -->
+            ${post.content}
         </div>
         <div class="post-associations">
             ${bookHtml ? `<h4><i class="fas fa-book"></i> 关联书籍</h4><p>${bookHtml}</p>` : ''}
             <h4><i class="fas fa-tags"></i> 相关话题</h4>
-            <div class="tag-cloud">${topicsHtml || '无'}</div>
+            <div class="tag-cloud">${topicsHtml}</div>
         </div>
         <div class="post-actions-footer">
             ${likeButtonHtml}
-            ${editButtonHtml}
+            {/* 编辑按钮也可以考虑放在这里 */}
         </div>
     `;
     container.innerHTML = postHtml;
 
-    // 点赞按钮事件监听
     const likeBtn = document.getElementById('likeBtn');
     if (likeBtn) {
         likeBtn.addEventListener('click', toggleLikePost);
-        // (未来) 检查用户是否已点赞并更新按钮状态
         checkIfUserLiked(post.id);
     }
 }
-
 function displayError(message) {
     const container = document.getElementById('postDetailContainer');
     if (container) {
