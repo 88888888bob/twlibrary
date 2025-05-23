@@ -140,3 +140,91 @@ async function apiCall(endpoint, method = 'GET', body = null, includeCredentials
         throw new Error(error.message || 'A network error occurred.');
     }
 }
+
+// --- 新添加：通用分页渲染函数 ---
+/**
+ * 渲染分页控件.
+ * @param {object} pagination - 从 API 返回的分页对象 (e.g., { currentPage, totalPages, itemsPerPage, totalItems, hasNextPage, hasPrevPage }).
+ * @param {HTMLElement} container - 用于放置分页控件的 DOM 元素.
+ * @param {function} onPageClickCallback - 当页码被点击时调用的回调函数，接收新的页码作为参数.
+ */
+function renderPagination(pagination, container, onPageClickCallback) {
+    // 确保 pagination 对象存在且包含必要属性
+    if (!pagination || typeof pagination.totalPages !== 'number' || pagination.totalPages <= 0) {
+        container.innerHTML = ""; // 没有页数或数据无效，则清空分页
+        return;
+    }
+    // 如果只有一页，也不显示分页控件
+    if (pagination.totalPages <= 1) {
+        container.innerHTML = "";
+        return;
+    }
+
+    let paginationHtml = '<nav class="pagination"><ul>';
+    
+    // 上一页按钮
+    paginationHtml += `<li class="page-item ${pagination.hasPrevPage ? '' : 'disabled'}">
+                           <a class="page-link" href="#" data-page="${pagination.currentPage - 1}" aria-label="Previous">«</a>
+                       </li>`;
+
+    // 页码按钮
+    const maxPagesToShow = 5; // 最多显示的页码按钮数（除了首尾和省略号）
+    let startPage = Math.max(1, pagination.currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(pagination.totalPages, startPage + maxPagesToShow - 1);
+
+    // 调整 startPage 和 endPage 以确保显示足够的页码（如果总页数允许）
+    if (pagination.totalPages >= maxPagesToShow && (endPage - startPage + 1 < maxPagesToShow)) {
+        if (pagination.currentPage < (maxPagesToShow / 2)) { // 接近首页
+            endPage = Math.min(pagination.totalPages, maxPagesToShow);
+        } else if (pagination.currentPage > pagination.totalPages - (maxPagesToShow / 2)) { // 接近尾页
+            startPage = Math.max(1, pagination.totalPages - maxPagesToShow + 1);
+        } else { // 在中间
+             startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+    }
+    
+    // 省略号和首页按钮
+    if (startPage > 1) {
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+        if (startPage > 2) {
+            paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+
+    // 中间的页码
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHtml += `<li class="page-item ${i === pagination.currentPage ? 'active' : ''}">
+                               <a class="page-link" href="#" data-page="${i}">${i}</a>
+                           </li>`;
+    }
+
+    // 省略号和尾页按钮
+    if (endPage < pagination.totalPages) {
+        if (endPage < pagination.totalPages - 1) {
+            paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${pagination.totalPages}">${pagination.totalPages}</a></li>`;
+    }
+
+    // 下一页按钮
+    paginationHtml += `<li class="page-item ${pagination.hasNextPage ? '' : 'disabled'}">
+                           <a class="page-link" href="#" data-page="${pagination.currentPage + 1}" aria-label="Next">»</a>
+                       </li>`;
+    paginationHtml += '</ul></nav>';
+    container.innerHTML = paginationHtml;
+
+    // 为所有可点击的页码链接添加事件监听器
+    container.querySelectorAll('.page-link[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const parentLi = e.currentTarget.closest('li');
+            if (parentLi && parentLi.classList.contains('disabled')) {
+                return; // 如果按钮是禁用的，则不执行任何操作
+            }
+            const page = parseInt(e.currentTarget.dataset.page);
+            if (page && !isNaN(page)) { // 确保 page 是一个有效的数字
+                onPageClickCallback(page);
+            }
+        });
+    });
+}

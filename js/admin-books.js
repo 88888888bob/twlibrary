@@ -2,9 +2,13 @@
 // Assumes API_BASE_URL, contentArea, showAlert, showConfirm, showLoading, apiCall are globally available
 // or passed/imported if using modules.
 
-// --- Globals for this module ---
-let currentBookListData = [];
-const bookCategories = [ // Should ideally be fetched from API
+// --- Globals for this module ---\
+// let currentBookListData = []; // 不再需要缓存所有数据
+let currentBookPage = 1;
+const BOOKS_PER_PAGE = 15; // 与后端分页匹配或自定义
+let currentBookFilters = { search: '' }; // 可以扩展更多筛选条件
+
+const bookCategories = [ // Should ideally be fetched from API or a shared config
     { id: 1, name: '小说 (Fiction)' }, { id: 2, name: '文学 (Literature)' }, { id: 3, name: '历史 (History)' },
     { id: 4, name: '科学 (Science)' }, { id: 5, name: '技术 (Technology)' }, { id: 6, name: '艺术 (Art)' },
     { id: 7, name: '哲学 (Philosophy)' }, { id: 8, name: '传记 (Biography)' }, { id: 9, name: '儿童读物 (Children\'s Books)' },
@@ -12,8 +16,14 @@ const bookCategories = [ // Should ideally be fetched from API
 ];
 
 
+
 // --- Navigation entry points ---
-function showBookList() { loadBookListLogic(); }
+function showBookList() { 
+    currentBookPage = 1; // 重置页码
+    currentBookFilters = { search: '' }; // 重置筛选条件
+    loadBookListFrameworkAndFetchData(); 
+}
+
 function showAddBookForm() { renderAddBookForm(); }
 function showCategoryManagement() {
     contentArea.innerHTML = `<div class="content-section"><h2><i class="fas fa-tags"></i>Book Data Management 图书分类管理</h2><p>Work in progess! 此功能待实现。</p></div>`;
@@ -65,32 +75,56 @@ function performBookClientSearch() {
     renderBookListTable(filteredBooks);
 }
 
-function renderBookListTable(books) {
+function renderBookListTable(books) { // books 参数现在是当前页的数据
     const bookListDiv = document.getElementById('bookListContainer');
     if (!bookListDiv) { console.error("bookListContainer element not found!"); return; }
-    if (!books || books.length === 0) { bookListDiv.innerHTML = '<p>Cannot find a matching book. 没有找到匹配的图书。</p>'; return; }
-    // Ensure escapeHtml is available
+    if (!books || books.length === 0) { 
+        bookListDiv.innerHTML = '<p>没有找到匹配的图书。</p>'; 
+        return; 
+    }
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text; 
+
+    // 获取 category_name (如果 books 对象中没有，需要从 bookCategories 查找)
+    const getCategoryName = (categoryId) => {
+        const category = bookCategories.find(cat => cat.id === categoryId);
+        return category ? esc(category.name) : '未知分类';
+    };
 
     bookListDiv.innerHTML = `
         <table class="data-table book-table">
-            <thead><tr><th>ISBN</th><th>Book Name书名</th><th>Author作者</th><th>Publisher 出版社</th><th>Book Copies馆藏 (可用/总 Usable/Total)</th><th>Status状态</th><th>Operation 操作</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>ISBN</th>
+                    <th>书名</th>
+                    <th>作者</th>
+                    <th>分类</th> 
+                    <th>出版社</th>
+                    <th>馆藏 (可用/总)</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
             <tbody>
                 ${books.map(book => `
                     <tr>
-                        <td>${esc(book.isbn)}</td><td>${esc(book.title)}</td><td>${esc(book.author) || '-'}</td>
-                        <td>${esc(book.publisher) || '-'}</td><td>${esc(book.available_copies)}/${esc(book.total_copies)}</td>
+                        <td>${esc(book.isbn)}</td>
+                        <td>${esc(book.title)}</td>
+                        <td>${esc(book.author) || '-'}</td>
+                        <td>${book.category_name || getCategoryName(book.category_id)}</td> 
+                        <td>${esc(book.publisher) || '-'}</td>
+                        <td>${esc(book.available_copies)} / ${esc(book.total_copies)}</td>
                         <td>${esc(book.status)}</td>
                         <td>
-                            <button class="btn-edit btn-sm" onclick="renderEditBookForm('${esc(book.isbn)}')"><i class="fas fa-edit"></i></button>
-                            <button class="btn-delete btn-sm" onclick="deleteBook('${esc(book.isbn)}')"><i class="fas fa-trash"></i></button>
+                            <button class="btn-edit btn-sm" onclick="renderEditBookForm('${esc(book.isbn)}')"><i class="fas fa-edit"></i> 编辑</button>
+                            <button class="btn-delete btn-sm" onclick="deleteBook('${esc(book.isbn)}')"><i class="fas fa-trash"></i> 删除</button>
                         </td>
                     </tr>`).join('')}
             </tbody>
         </table>`;
 }
 
-// --- Add Book Logic ---
+
+// --- Add Book Form (Moved from original position for logical flow, no functional change) ---
 function renderAddBookForm() {
     const categoryOptions = bookCategories.map(cat => `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`).join('');
     contentArea.innerHTML = `
@@ -99,116 +133,119 @@ function renderAddBookForm() {
                 <h2><i class="fas fa-plus-circle"></i> 添加新书</h2>
                 <form id="addBookForm" onsubmit="submitAddBookForm(event)">
                     <div class="form-group"><label for="isbn">ISBN<span class="required-star">*</span>:</label><input type="text" id="isbn" name="isbn" required></div>
-                    <div class="form-group"><label for="title">Name 书名<span class="required-star">*</span>:</label><input type="text" id="title" name="title" required></div>
-                    <div class="form-group"><label for="author">Author 作者：</label><input type="text" id="author" name="author"></div>
-                    <div class="form-group"><label for="publisher">Publisher 出版社：</label><input type="text" id="publisher" name="publisher"></div>
-                    <div class="form-group"><label for="publication_date">Publication Date 出版日期：</label><input type="date" id="publication_date" name="publication_date"></div>
-                    <div class="form-group"><label for="category_id">Book Category 图书分类<span class="required-star">*</span>:</label><select id="category_id" name="category_id" required><option value="">请选择分类...</option>${categoryOptions}</select></div>
-                    <div class="form-group"><label for="total_copies">Total copies in library 总馆藏量：</label><input type="number" id="total_copies" name="total_copies" value="1" min="1"></div>
-                    <div class="form-group"><label for="status">Status 状态：</label><select id="status" name="status"><option value="在馆">在馆</option><option value="遗失">遗失</option><option value="维护中">维护中</option></select></div>
+                    <div class="form-group"><label for="title">书名<span class="required-star">*</span>:</label><input type="text" id="title" name="title" required></div>
+                    <div class="form-group"><label for="author">作者：</label><input type="text" id="author" name="author"></div>
+                    <div class="form-group"><label for="publisher">出版社：</label><input type="text" id="publisher" name="publisher"></div>
+                    <div class="form-group"><label for="publication_date">出版日期：</label><input type="date" id="publication_date" name="publication_date"></div>
+                    <div class="form-group"><label for="category_id">图书分类<span class="required-star">*</span>:</label><select id="category_id" name="category_id" required><option value="">请选择分类...</option>${categoryOptions}</select></div>
+                    <div class="form-group"><label for="total_copies">总馆藏量：</label><input type="number" id="total_copies" name="total_copies" value="1" min="1"></div>
+                    <div class="form-group"><label for="status">状态：</label><select id="status" name="status"><option value="在馆">在馆</option><option value="遗失">遗失</option><option value="维护中">维护中</option></select></div>
                     <div class="form-actions">
-                        <button type="submit" class="btn-submit"><i class="fas fa-check"></i>Submit 提交</button>
-                        <button type="button" class="btn-cancel" onclick="dispatchAction('showBookList')"><i class="fas fa-times"></i>Cancel 取消</button>
+                        <button type="submit" class="btn-submit"><i class="fas fa-check"></i> 提交</button>
+                        <button type="button" class="btn-cancel" onclick="dispatchAction('showBookList')"><i class="fas fa-times"></i> 取消</button>
                     </div>
-                    <p style="margin-top:15px; font-size:0.9em; color: #666;"><span class="required-star">*</span>Must write options. 表示必填项。</p>
+                    <p style="margin-top:15px; font-size:0.9em; color: #666;"><span class="required-star">*</span> 表示必填项。</p>
                 </form>
             </div>
         </div>`;
 }
 
+
 async function submitAddBookForm(event) {
-    event.preventDefault(); const form = event.target;
+    event.preventDefault(); 
+    const form = event.target;
     const bookData = { 
         isbn: form.isbn.value, title: form.title.value, author: form.author.value, 
         publisher: form.publisher.value, publication_date: form.publication_date.value || null, 
         category_id: parseInt(form.category_id.value), 
         total_copies: parseInt(form.total_copies.value) || 1, 
-        status: form.status.value || 'In Library 在馆' 
+        status: form.status.value || '在馆' 
     };
     try {
         const result = await apiCall('/addbooks', 'POST', bookData);
         if (result.success) { 
-            showAlert('Book adding successful! 图书添加成功！', '成功', 'success'); 
-            dispatchAction('showBookList'); 
+            showAlert('图书添加成功！', '成功', 'success'); 
+            dispatchAction('showBookList'); // 返回并刷新列表
         } else { 
-            showAlert('Error in adiing添加失败：' + (result.message || 'Unknown error 未知错误'), 'Operation error 操作失败', 'error'); 
+            showAlert('添加失败：' + (result.message || '未知错误'), '操作失败', 'error'); 
         }
     } catch (error) { 
         console.error('Error submitting book form:', error); 
-        showAlert(`Error when submitting book details 提交图书时发生错误: ${error.message}`, 'Network error 网络错误', 'error'); 
+        showAlert(`提交图书时发生错误：${error.message}`, '网络错误', 'error'); 
     }
 }
 
-// --- Edit Book Logic ---
-async function renderEditBookForm(isbn) { // Renamed from showEditBookForm for consistency
+// --- Edit Book Logic (renderEditBookForm, submitEditBookForm) ---
+async function renderEditBookForm(isbn) { // 注意：这里获取的是单个图书，不是列表
     showLoading();
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
     try {
+        // 后端 /searchbooks?isbn=xxx 返回的是数组，即使只有一个结果
         const searchResult = await apiCall(`/searchbooks?isbn=${encodeURIComponent(isbn)}`);
-        if (!searchResult.success || !searchResult.results || searchResult.results.length === 0) {
-            throw new Error('Cannot find the book requested or loading error. Please try again later. 找不到该图书或加载详情失败。');
+        if (!searchResult.success || !searchResult.data || searchResult.data.length === 0) { // 检查 data 字段
+            throw new Error('找不到该图书或加载详情失败。');
         }
-        const book = searchResult.results[0];
+        const book = searchResult.data[0]; // 第一个结果
 
         const categoryOptions = bookCategories.map(cat => 
             `<option value="${cat.id}" ${book.category_id == cat.id ? 'selected' : ''}>${esc(cat.name)}</option>`
-        ).join(''); // Use == for category_id comparison as one might be string, other number
+        ).join('');
 
         contentArea.innerHTML = `
             <div class="content-section">
                 <div class="form-container">
-                    <h2><i class="fas fa-edit"></i> Change Book Details-ISBN 修改图书 - ISBN: ${esc(book.isbn)}</h2>
+                    <h2><i class="fas fa-edit"></i> 修改图书 - ISBN: ${esc(book.isbn)}</h2>
                     <form id="editBookForm" onsubmit="submitEditBookForm(event, '${esc(book.isbn)}')">
                         <div class="form-group">
-                            <label for="edit_title">Name书名：<span class="required-star">*</span>:</label>
+                            <label for="edit_title">书名<span class="required-star">*</span>:</label>
                             <input type="text" id="edit_title" name="title" value="${esc(book.title || '')}" required>
                         </div>
                         <div class="form-group">
-                            <label for="edit_author">Author作者：</label>
+                            <label for="edit_author">作者：</label>
                             <input type="text" id="edit_author" name="author" value="${esc(book.author || '')}">
                         </div>
                         <div class="form-group">
-                            <label for="edit_publisher">Publisher出版社：</label>
+                            <label for="edit_publisher">出版社：</label>
                             <input type="text" id="edit_publisher" name="publisher" value="${esc(book.publisher || '')}">
                         </div>
                         <div class="form-group">
-                            <label for="edit_publication_date">Publication Date 出版日期：</label>
+                            <label for="edit_publication_date">出版日期：</label>
                             <input type="date" id="edit_publication_date" name="publication_date" value="${book.publication_date ? String(book.publication_date).split('T')[0] : ''}">
                         </div>
                         <div class="form-group">
-                            <label for="edit_category_id">Book Category 图书分类<span class="required-star">*</span>:</label>
+                            <label for="edit_category_id">图书分类<span class="required-star">*</span>:</label>
                             <select id="edit_category_id" name="category_id" required>
-                                <option value="">Please choose one option 请选择分类...</option>
+                                <option value="">请选择分类...</option>
                                 ${categoryOptions}
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="edit_total_copies">Total copies in library总馆藏量：</label>
-                            <input type="number" id="edit_total_copies" name="total_copies" value="${book.total_copies !== undefined ? book.total_copies : 1}" min="0">
+                            <label for="edit_total_copies">总馆藏量：</label>
+                            <input type="number" id="edit_total_copies" name="total_copies" value="${book.total_copies !==undefined ? book.total_copies : 1}" min="0">
                         </div>
                          <div class="form-group">
-                            <label for="edit_available_copies">Available number of books可用馆藏：</label>
+                            <label for="edit_available_copies">可用馆藏：</label>
                             <input type="number" id="edit_available_copies" name="available_copies" value="${book.available_copies !== undefined ? book.available_copies : 0}" min="0">
                         </div>
                         <div class="form-group">
-                            <label for="edit_status">Status状态：</label>
+                            <label for="edit_status">状态：</label>
                             <select id="edit_status" name="status">
-                                <option value="In library 在馆" ${book.status === 'In library 在馆' ? 'selected' : ''}>In library 在馆</option>
-                                <option value="Lost遗失" ${book.status === 'Lost 遗失' ? 'selected' : ''}>Lost 遗失</option>
-                                <option value="In maintenance 维护中" ${book.status === 'In maintenence 维护中' ? 'selected' : ''}>In maintenance 维护中</option>
-                                <!-- Add other statuses if your backend supports them -->
+                                <option value="在馆" ${book.status === '在馆' ? 'selected' : ''}>在馆 (In Library)</option>
+                                <option value="借出" ${book.status === '借出' ? 'selected' : ''}>借出 (Borrowed)</option>
+                                <option value="遗失" ${book.status === '遗失' ? 'selected' : ''}>遗失 (Lost)</option>
+                                <option value="维护中" ${book.status === '维护中' ? 'selected' : ''}>维护中 (In Maintenance)</option>
                             </select>
                         </div>
                         <div class="form-actions">
-                            <button type="submit" class="btn-submit"><i class="fas fa-save"></i>Save and Change 保存更改</button>
-                            <button type="button" class="btn-cancel" onclick="dispatchAction('showBookList')"><i class="fas fa-times"></i>Cancel 取消</button>
+                            <button type="submit" class="btn-submit"><i class="fas fa-save"></i> 保存更改</button>
+                            <button type="button" class="btn-cancel" onclick="dispatchAction('showBookList')"><i class="fas fa-times"></i> 取消</button>
                         </div>
-                        <p style="margin-top:15px; font-size:0.9em; color: #666;"><span class="required-star">*</span>Must write options 表示必填项。</p>
+                        <p style="margin-top:15px; font-size:0.9em; color: #666;"><span class="required-star">*</span> 表示必填项。</p>
                     </form>
                 </div>
             </div>`;
     } catch (error) {
-        showAlert(`Error in loading book details加载图书信息失败: ${error.message}`, 'Error 错误', 'error');
+        showAlert(`加载图书信息失败：${error.message}`, '错误', 'error');
         dispatchAction('showBookList');
     }
 }
@@ -218,51 +255,143 @@ async function submitEditBookForm(event, isbn) {
     const form = event.target;
     const bookData = {
         title: form.title.value,
-        author: form.author.value || null, // Send null if empty
+        author: form.author.value || null,
         publisher: form.publisher.value || null,
         publication_date: form.publication_date.value || null,
         category_id: form.category_id.value ? parseInt(form.category_id.value) : null,
-        total_copies: form.total_copies.value !== '' ? parseInt(form.total_copies.value) : undefined, // Send undefined if not changed or empty
+        total_copies: form.total_copies.value !== '' ? parseInt(form.total_copies.value) : undefined,
         available_copies: form.available_copies.value !== '' ? parseInt(form.available_copies.value) : undefined,
         status: form.status.value
     };
 
-    // Optional: Send only changed fields. This requires comparing with original book data.
-    // For simplicity, sending all fields and backend PUT handles partial updates.
-
     try {
-        // Backend endpoint is PUT /editbook/:isbn
         const result = await apiCall(`/editbook/${isbn}`, 'PUT', bookData); 
         if (result.success) {
-            showAlert('Book Details Changed Successfully图书信息更新成功！', 'Success 成功', 'success');
-            dispatchAction('showBookList');
+            showAlert('图书信息更新成功！', '成功', 'success');
+            dispatchAction('showBookList'); // 返回并刷新列表
         } else {
-            showAlert('Book Details update error更新图书失败：' + (result.message || 'Unknown Error 未知错误'), 'Operation error 操作失败', 'error');
+            showAlert('更新图书失败：' + (result.message || '未知错误'), '操作失败', 'error');
         }
     } catch (error) {
         console.error('Error updating book:', error);
-        showAlert(`Error in updating book 更新图书时发生错误: ${error.message}`, 'Network error 网络错误', 'error');
+        showAlert(`更新图书时发生错误：${error.message}`, '网络错误', 'error');
     }
 }
 
 // --- Delete Book Logic ---
 async function deleteBook(isbn) {
-    // Ensure escapeHtml is available for the message if isbn can contain special chars
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
-    showConfirm(`Do you confirm to delete  the book with ISBN of  确定要删除ISBN为 <strong>${esc(isbn)}</strong> ? 的图书吗？`, async (confirmed) => {
+    showConfirm(`确定要删除 ISBN 为 <strong>${esc(isbn)}</strong> 的图书吗？`, async (confirmed) => {
         if (confirmed) {
             try {
                 const result = await apiCall(`/deletebooks`, 'DELETE', { isbn });
                 if (result.success) { 
-                    showAlert('Book Deletion success! 图书删除成功！', 'Succcess! 成功', 'success'); 
-                    loadBookListLogic(); 
+                    showAlert('图书删除成功！', '成功', 'success'); 
+                    fetchAndRenderBooks(); // 只刷新当前页和筛选条件下的数据
                 } else { 
-                    showAlert('Deletion error! 删除失败：' + (result.message || 'Unknown Error 未知错误'), 'Operation Error 操作失败', 'error'); 
+                    showAlert('删除失败：' + (result.message || '未知错误'), '操作失败', 'error'); 
                 }
             } catch (error) { 
                 console.error('Error deleting book:', error); 
-                showAlert(`Error when deletion of book删除图书时发生错误: ${error.message}`, 'Network Error. Please try again later. 网络错误', 'error'); 
+                showAlert(`删除图书时发生错误：${error.message}`, '网络错误', 'error'); 
             }
         }
     }, '删除确认');
 }
+
+
+// --- Book List Logic ---\
+function loadBookListFrameworkAndFetchData() {
+    console.log("[AdminBooks] Initializing book list framework.");
+    showLoading();
+    contentArea.innerHTML = `
+        <div class="content-section">
+            <h2><i class="fas fa-list"></i> 图书列表</h2>
+            <div class="book-list-header list-header">
+                <button class="btn-add" onclick="dispatchAction('showAddBookForm')"><i class="fas fa-plus"></i> 添加图书</button>
+                <div class="search-container">
+                    <input type="text" id="bookSearchInput" placeholder="搜索书名、作者、ISBN..." value="${escapeHtml(currentBookFilters.search || '')}" onkeyup="handleBookSearchInput(event)">
+                    <button class="btn-search" onclick="applyBookSearchFilter()"><i class="fas fa-search"></i> 搜索</button>
+                    <button class="btn-cancel" onclick="clearBookSearchFilter()" title="清除搜索"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div id="bookListContainer"><div class="loading-placeholder"><p>正在准备列表...</p></div></div>
+            <div id="bookPaginationContainer"></div>
+        </div>`;
+    
+    document.getElementById('bookSearchInput')?.addEventListener('keyup', event => {
+        if (event.key === "Enter") applyBookSearchFilter();
+    });
+    
+    fetchAndRenderBooks(); // 初始加载第一页数据
+}
+
+function handleBookSearchInput(event) { 
+    if (event.key === "Enter") applyBookSearchFilter(); 
+}
+
+function applyBookSearchFilter() {
+    const searchInput = document.getElementById('bookSearchInput');
+    currentBookFilters.search = searchInput ? searchInput.value.trim() : '';
+    currentBookPage = 1; // 搜索时重置到第一页
+    console.log(`[AdminBooks] Applying search filter: '${currentBookFilters.search}'`);
+    fetchAndRenderBooks();
+}
+
+function clearBookSearchFilter() {
+    currentBookFilters.search = '';
+    const searchInput = document.getElementById('bookSearchInput');
+    if (searchInput) searchInput.value = '';
+    currentBookPage = 1;
+    console.log("[AdminBooks] Search filter cleared.");
+    fetchAndRenderBooks();
+}
+
+async function fetchAndRenderBooks() {
+    console.log(`[AdminBooks] Fetching books for page: ${currentBookPage}, filters:`, currentBookFilters);
+    const bookListContainer = document.getElementById('bookListContainer');
+    const paginationContainer = document.getElementById('bookPaginationContainer');
+    if (!bookListContainer || !paginationContainer) {
+        console.error("[AdminBooks] Table or pagination container not found.");
+        return;
+    }
+
+    showLoading(bookListContainer); // 在列表容器内显示加载动画
+    paginationContainer.innerHTML = ''; // 清空旧的分页
+
+    const queryParams = new URLSearchParams({
+        page: currentBookPage,
+        limit: BOOKS_PER_PAGE
+    });
+    if (currentBookFilters.search) {
+        // 后端 /searchbooks API 预期的是具体字段的搜索，而不是一个通用的 'search' 参数
+        // 这里我们假设用户输入的可能是 title, author, 或 isbn
+        // 为了简单起见，如果后端支持一个通用 `search` 参数，则用它。
+        // 否则，我们需要决定是只搜索标题，还是前端拆分，或修改后端。
+        // 当前后端 /searchbooks 支持 title, author, isbn 等，但不支持一个统一的 'search'
+        // 为了演示，我们先假设搜索的是 title
+        queryParams.append('title', currentBookFilters.search); 
+        // 如果需要更复杂的搜索（如同时搜作者和 ISBN），后端需要支持 OR 条件或者前端发送多个参数
+    }
+    // 可以添加其他筛选条件，如 queryParams.append('category_id', currentBookFilters.category);
+
+    try {
+        const response = await apiCall(`/searchbooks?${queryParams.toString()}`);
+        if (response.success && response.data) { // 检查 data 字段，因为 formatPaginatedResponse 返回 data
+            console.log("[AdminBooks] Books data fetched successfully:", response);
+            renderBookListTable(response.data); // response.data 包含当前页的书籍数组
+            renderPagination(response.pagination, paginationContainer, (newPage) => {
+                currentBookPage = newPage;
+                fetchAndRenderBooks(); // 点击分页按钮时重新获取数据
+            });
+        } else {
+            bookListContainer.innerHTML = `<p>无法加载图书列表：${response.message || '未知错误'}</p>`;
+            showAlert(response.message || '加载图书失败', '错误', 'error');
+        }
+    } catch (error) {
+        console.error('Error fetching book list:', error);
+        bookListContainer.innerHTML = `<p>加载图书列表时出错：${error.message}</p>`;
+        showAlert(`加载图书列表出错：${error.message}`, '网络错误', 'error');
+    }
+}
+
