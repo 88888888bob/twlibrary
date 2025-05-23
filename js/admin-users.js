@@ -79,47 +79,71 @@ function applyUserAdminRoleFilter() {
 }
 
 async function fetchAndRenderUsers() {
-    console.log(`[AdminUsers] Fetching users. Page: ${currentUserPage}, Filters:`, currentUserFilters);
+    console.log(`[AdminUsers] Fetching users. Page: ${currentUserPage}, Filters:`, JSON.stringify(currentUserFilters)); // 使用 JSON.stringify
     const userListContainer = document.getElementById('userListContainer');
     const paginationContainer = document.getElementById('userPaginationContainer');
+
     if (!userListContainer || !paginationContainer) {
         console.error("[AdminUsers] Table or pagination container not found.");
+        // 如果 showAlert 可用且合适，可以在这里提示用户界面错误
+        // if (typeof showAlert === 'function') showAlert("用户列表界面组件丢失，无法加载数据。", "界面错误", "error");
         return;
     }
     showLoading(userListContainer);
     paginationContainer.innerHTML = '';
 
+    // 直接使用 currentUserPage 和 USERS_PER_PAGE 构建查询参数
     const queryParams = new URLSearchParams({
-        page: currentUserPage,
-        limit: USERS_PER_PAGE
+        page: currentUserPage, // 使用模块内维护的当前页码
+        limit: USERS_PER_PAGE  // 使用模块内定义的每页数量
     });
-    if (currentUserFilters.search) queryParams.append('search', currentUserFilters.search);
-    if (currentUserFilters.role) queryParams.append('role', currentUserFilters.role);
+
+    if (currentUserFilters.search) {
+        queryParams.append('search', currentUserFilters.search);
+    }
+    if (currentUserFilters.role) {
+        queryParams.append('role', currentUserFilters.role);
+    }
+
+    const finalApiUrl = `/api/admin/users?${queryParams.toString()}`;
+    console.log("[AdminUsers] Calling API with URL:", finalApiUrl);
 
     try {
-        const response = await apiCall(`/api/admin/users?${queryParams.toString()}`);
-        if (response.success && response.data) { // Expecting paginated response
-            console.log("[AdminUsers] Users data fetched successfully:", response);
+        const response = await apiCall(finalApiUrl); // API 调用
+        console.log("[AdminUsers] API Response RAW for users:", JSON.stringify(response));
+
+        if (response && response.success && Array.isArray(response.data) && response.pagination) {
+            console.log("[AdminUsers] Users data fetched successfully. Data length:", response.data.length);
             renderUserListTable(response.data);
             renderPagination(response.pagination, paginationContainer, (newPage) => {
                 currentUserPage = newPage;
                 fetchAndRenderUsers();
             });
         } else {
-            userListContainer.innerHTML = `<p>无法加载用户列表：${response.message || '未知错误'}</p>`;
-            showAlert(response.message || '加载用户列表失败', '错误', 'error');
+            let errorMessage = '无法加载用户列表';
+            if (response && response.message) {
+                errorMessage += `：${response.message}`;
+            } else if (response && !response.success){
+                 errorMessage += ' (API 调用未成功)';
+            } else if (response && !Array.isArray(response.data)) {
+                errorMessage += ' (API 返回数据格式不正确，缺少 data 数组)';
+                console.error("[AdminUsers] API response.data is not an array:", response.data);
+            } else if (response && !response.pagination) {
+                 errorMessage += ' (API 返回数据格式不正确，缺少 pagination 对象)';
+                 console.error("[AdminUsers] API response.pagination is missing:", response.pagination);
+            } else {
+                 errorMessage += ' (未知错误或数据为空)';
+            }
+            console.error("[AdminUsers] Error or invalid data from API:", errorMessage, "Full response:", response);
+            if (userListContainer) userListContainer.innerHTML = `<p>${errorMessage}</p>`;
+            if (typeof showAlert === 'function') showAlert(errorMessage, '错误', 'error');
         }
     } catch (error) {
-        console.error('Error fetching user list:', error);
-        userListContainer.innerHTML = `<p>加载用户列表时出错：${error.message}</p>`;
-        showAlert(`加载用户列表出错：${error.message}`, '网络错误', 'error');
+        console.error("[AdminUsers] Error fetching user list (catch block):", error);
+        if (userListContainer) userListContainer.innerHTML = `<p>加载用户列表时出错：${error.message}</p>`;
+        if (typeof showAlert === 'function') showAlert(`加载用户列表出错：${error.message}`, '网络错误', 'error');
     }
 }
-
-
-
-
-
 
 
 // --- User List Logic ---

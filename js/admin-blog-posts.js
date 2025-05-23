@@ -558,10 +558,14 @@ function applyPostFilters() {
 }
 
 function renderBlogPostsTable(posts, container) {
-    console.log("[AdminBlogPosts] renderBlogPostsTable called with posts:", posts);
-    if (!posts || !container) {
-        console.error("[AdminBlogPosts] renderBlogPostsTable: Invalid posts data or container.");
-        if (container) container.innerHTML = "<p>加载文章数据时出错或没有文章。</p>";
+    console.log("[AdminBlogPosts] renderBlogPostsTable called with posts:", posts ? posts.length : 'null');
+    if (!container) {
+        console.error("[AdminBlogPosts] renderBlogPostsTable: Container is missing.");
+        return;
+    }
+    if (!posts) { // 进一步检查 posts 是否为 null 或 undefined
+        console.warn("[AdminBlogPosts] renderBlogPostsTable: Posts data is null or undefined.");
+        container.innerHTML = "<p>加载文章数据时出错或没有文章。</p>";
         return;
     }
     if (posts.length === 0) {
@@ -586,11 +590,11 @@ function renderBlogPostsTable(posts, container) {
             </thead>
             <tbody>`;
     posts.forEach(post => {
-        const displayUpdatedAt = post.updated_at_formatted ? formatUtcToLocalDate(post.updated_at_formatted) : '-';
-        const displayPublishedDate = post.published_date ? formatUtcToLocalDate(post.published_date, true) : '-';
-        // (确保 post.author_username 是从后端获取的，可能是 post.author_actual_username 或 post.post_author_username_on_post_table)
+        // 使用 formatUtcToLocalDateCommon 进行日期格式化
+        const displayUpdatedAt = post.updated_at_formatted ? formatUtcToLocalDateCommon(post.updated_at_formatted, false) : (post.updated_at ? formatUtcToLocalDateCommon(post.updated_at, false) : '-');
+        const displayPublishedDate = post.published_date ? formatUtcToLocalDateCommon(post.published_date, true) : (post.published_at ? formatUtcToLocalDateCommon(post.published_at, true) : '-');
+        
         const authorDisplayName = esc(post.author_username || post.author_actual_username || post.post_author_username_on_post_table || 'N/A');
-
 
         tableHtml += `
             <tr class="${post.is_featured ? 'featured-row' : ''}">
@@ -621,6 +625,7 @@ function renderBlogPostsTable(posts, container) {
     });
     tableHtml += `</tbody></table>`;
     container.innerHTML = tableHtml;
+    console.log("[AdminBlogPosts] Blog posts table rendered.");
 }
 
 // Generic pagination renderer (can be moved to admin-utils.js if used elsewhere)
