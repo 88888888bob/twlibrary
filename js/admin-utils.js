@@ -2,28 +2,38 @@ const API_BASE_URL = 'https://twapi.bob666.eu.org';
 const LOGIN_PAGE_URL = 'login.html';
 const contentArea = document.getElementById('contentArea');
 
+// --- 确认或添加：通用日期格式化函数 ---
 /**
  * 将 UTC 时间字符串转换为用户本地时区的日期时间字符串。
  * @param {string} utcDateTimeString - UTC 时间字符串 (例如 'YYYY-MM-DD HH:MM:SS' 或 'YYYY-MM-DDTHH:MM:SSZ')。
  * @param {boolean} [dateOnly=false] - 是否只返回日期部分 (YYYY-MM-DD)。
  * @param {object} [options=null] - 传递给 Date.toLocaleString 的选项。
- * @returns {string} 本地化后的日期时间字符串，或原始字符串如果转换失败。
+ * @returns {string} 本地化后的日期时间字符串，或原始字符串如果转换失败或输入为空。
  */
-function formatUtcToLocalDate(utcDateTimeString, dateOnly = false, options = null) {
+function formatUtcToLocalDateCommon(utcDateTimeString, dateOnly = false, options = null) {
     if (!utcDateTimeString) {
-        return '-'; // 或者适合的占位符
+        return '-'; // 对于空值或无效值返回占位符
     }
     try {
-        // 尝试确保输入是标准 ISO 格式，如果不是，Date 构造函数可能行为不一致
-        // 'YYYY-MM-DD HH:MM:SS' 需要替换空格为 'T' 并附加 'Z' (表示 UTC)
-        let isoString = utcDateTimeString.replace(' ', 'T');
-        if (!isoString.endsWith('Z') && !isoString.includes('+') && !isoString.includes('-')) { // 简单判断是否已有时区信息
-            isoString += 'Z';
+        // 尝试确保输入是标准 ISO 格式
+        let isoString = String(utcDateTimeString).replace(' ', 'T');
+        if (!isoString.endsWith('Z') && !isoString.includes('+') && !isoString.match(/\d{2}:\d{2}-\d{2}:\d{2}$/) && !isoString.match(/\d{2}:\d{2}\+\d{2}:\d{2}$/)) { // 简单判断是否已有时区信息
+             // 如果时间字符串不包含 'Z' (UTC) 且不包含 +/- 时区偏移，则假定它是 UTC。
+             // 注意：'YYYY-MM-DD' 这样的日期字符串，Date 构造函数在不同浏览器中可能解析为 UTC 或本地时间。
+             // 为了统一，如果只有日期，最好也处理成明确的 UTC。
+             if (isoString.length === 10 && isoString.match(/^\d{4}-\d{2}-\d{2}$/)) { // 纯日期 YYYY-MM-DD
+                isoString += 'T00:00:00Z'; // 假设为 UTC 的午夜
+             } else if (!isoString.includes('T')) { // 如果没有 T，但有时间，可能也需要补 Z
+                // 这种情况比较模糊，最好后端返回标准的 ISO 8601 带 Z 或时区偏移的字符串
+                isoString += 'Z'; // 这是一个大胆的假设，如果后端时间戳不规范，这里可能出错
+             } else if (!isoString.endsWith('Z')) {
+                isoString += 'Z';
+             }
         }
 
         const date = new Date(isoString);
         if (isNaN(date.getTime())) { // 无效日期
-            console.warn(`formatUtcToLocalDate: Invalid date string provided: ${utcDateTimeString}`);
+            console.warn(`formatUtcToLocalDateCommon: Invalid date string provided: ${utcDateTimeString}, parsed as: ${isoString}`);
             return utcDateTimeString; // 返回原始字符串
         }
 
