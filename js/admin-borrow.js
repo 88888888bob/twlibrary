@@ -108,7 +108,7 @@ function clearBorrowSearchFilter() {
 
 
 async function fetchAndRenderBorrowedRecords() {
-    console.log(`[AdminBorrow] Fetching records. Page: ${currentBorrowPage}, Filters:`, currentBorrowFilters);
+    console.log(`[AdminBorrow] Attempting to fetch records. Page: ${currentBorrowPage}, Filters:`, JSON.stringify(currentBorrowFilters));
     const listContainer = document.getElementById('borrowedListContainer');
     const paginationContainer = document.getElementById('borrowPaginationContainer');
     if (!listContainer || !paginationContainer) {
@@ -122,57 +122,61 @@ async function fetchAndRenderBorrowedRecords() {
         page: currentBorrowPage,
         limit: BORROW_RECORDS_PER_PAGE
     });
-
-    // API /managebooks?action=borrowed_records and /managebooks?action=overdue
-    // Need to decide how to structure API calls for status filter.
-    // Option 1: One endpoint for all records, frontend filters (bad for many records).
-    // Option 2: Backend supports status filtering on /managebooks?action=borrowed_records&status=...
-    // Option 3: Separate endpoints if logic is very different (already have one for overdue).
-
-    // Let's assume backend /managebooks?action=borrowed_records will handle search
-    // And status filtering can be done by changing the action for 'overdue'
-    // and using query params for 'borrowed' (returned=0) and 'returned' (returned=1)
     
     let apiAction = 'borrowed_records';
     if (currentBorrowFilters.status === 'overdue') {
-        apiAction = 'overdue'; // Backend handles overdue logic specifically
+        apiAction = 'overdue';
     } else if (currentBorrowFilters.status === 'borrowed') {
         queryParams.append('returned', '0');
     } else if (currentBorrowFilters.status === 'returned') {
         queryParams.append('returned', '1');
     }
-    // For 'all', no 'returned' param is sent, backend returns all.
 
     if (currentBorrowFilters.search) {
         queryParams.append('search', currentBorrowFilters.search);
     }
     
+    const finalApiUrl = `/managebooks?action=${apiAction}&${queryParams.toString()}`;
+    console.log("[AdminBorrow] Calling API with URL:", finalApiUrl); // <--- 调试 URL
+
     try {
-        const response = await apiCall(`/managebooks?action=${apiAction}&${queryParams.toString()}`);
-        if (response.success && response.data) { // Expecting paginated response format
-            console.log("[AdminBorrow] Borrowed records fetched successfully:", response);
+        const response = await apiCall(finalApiUrl); // 使用构建好的 URL
+        console.log("[AdminBorrow] API Response RAW:", JSON.stringify(response)); // <--- 关键调试点：打印原始 API 响应
+
+        // 确保你的 API 响应结构与这里处理的一致
+        // 我假设是 { success: true, data: [...], pagination: {...} }
+        if (response && response.success && Array.isArray(response.data) && response.pagination) {
+            console.log("[AdminBorrow] Borrowed records fetched successfully. Data length:", response.data.length);
             renderBorrowedListTable(response.data);
             renderPagination(response.pagination, paginationContainer, (newPage) => {
                 currentBorrowPage = newPage;
                 fetchAndRenderBorrowedRecords();
             });
         } else {
-            listContainer.innerHTML = `<p>无法加载借阅记录：${response.message || '未知错误'}</p>`;
-            showAlert(response.message || '加载借阅记录失败', '错误', 'error');
+            let errorMessage = '无法加载借阅记录';
+            if (response && response.message) {
+                errorMessage += `：${response.message}`;
+            } else if (response && !response.success) {
+                errorMessage += ' (API 调用未成功)';
+            } else if (response && !Array.isArray(response.data)) {
+                errorMessage += ' (API 返回数据格式不正确，缺少 data 数组)';
+                 console.error("[AdminBorrow] API response.data is not an array:", response.data);
+            } else if (response && !response.pagination) {
+                errorMessage += ' (API 返回数据格式不正确，缺少 pagination 对象)';
+                console.error("[AdminBorrow] API response.pagination is missing:", response.pagination);
+            } else {
+                 errorMessage += ' (未知错误或数据为空)';
+            }
+            console.error("[AdminBorrow] Error or invalid data from API:", errorMessage, "Full response:", response);
+            if (listContainer) listContainer.innerHTML = `<p>${errorMessage}</p>`;
+            if (typeof showAlert === 'function') showAlert(errorMessage, '错误', 'error');
         }
     } catch (error) {
-        console.error("Error loading borrowed records:", error);
-        listContainer.innerHTML = `<p>加载借阅记录出错：${error.message}</p>`;
-        showAlert(`加载借阅记录出错：${error.message}`, '网络错误', 'error');
+        console.error("[AdminBorrow] Error loading borrowed records (catch block):", error);
+        if (listContainer) listContainer.innerHTML = `<p>加载借阅记录出错：${error.message}</p>`;
+        if (typeof showAlert === 'function') showAlert(`加载借阅记录出错：${error.message}`, '网络错误', 'error');
     }
 }
-
-
-
-
-
-
-
 
 
 // --- Borrow Book Form (Moved for logical flow) ---
@@ -376,8 +380,12 @@ function filterAndRenderBorrowedRecords(filter) {
 }
 
 function renderBorrowedListTable(records) {
+    console.log("[AdminBorrow] Attempting to render records. Count:", records ? records.length : 'null/undefined'); // <--- 调试传入的records
     const listDiv = document.getElementById('borrowedListContainer');
-    if(!listDiv) { console.error("borrowedListContainer not found!"); return; }
+    if(!listDiv) { 
+        console.error("[AdminBorrow] borrowedListContainer not found for rendering!"); 
+        return; 
+    }
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (text) => text;
 
     if (!records || records.length === 0) { 
@@ -385,7 +393,7 @@ function renderBorrowedListTable(records) {
         return; 
     }
     
-    listDiv.innerHTML = `
+    let tableHTML = `
         <table class="data-table borrowed-table">
             <thead>
                 <tr>
@@ -400,34 +408,41 @@ function renderBorrowedListTable(records) {
                     <th>状态</th>
                 </tr>
             </thead>
-            <tbody>
-                ${records.map(record => { 
-                    const isOverdue = !record.returned && new Date(record.due_date) < new Date(); 
-                    let statusText = '';
-                    let statusClass = '';
-                    if (record.returned) {
-                        statusText = '已归还';
-                        statusClass = 'status-returned';
-                    } else if (isOverdue) {
-                        statusText = '逾期未还';
-                        statusClass = 'status-overdue';
-                    } else {
-                        statusText = '借阅中';
-                        statusClass = 'status-borrowed';
-                    }
-                    
-                    return `<tr>
-                                <td>${record.id}</td>
-                                <td>${esc(record.isbn)}</td>
-                                <td>${esc(record.book_title || 'N/A')}</td>
-                                <td>${record.user_id}</td>
-                                <td>${esc(record.username || 'N/A')}</td>
-                                <td>${formatUtcToLocalDateCommon(record.borrow_date, true)}</td>
-                                <td>${formatUtcToLocalDateCommon(record.due_date, true)}</td>
-                                <td>${record.returned && record.return_date ? formatUtcToLocalDateCommon(record.return_date, true) : '-'}</td>
-                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                            </tr>`; 
-                }).join('')}
-            </tbody>
-        </table>`;
+            <tbody>`;
+            
+    records.forEach(record => {
+        const isOverdue = !record.returned && new Date(record.due_date) < new Date(); 
+        let statusText = '';
+        let statusClass = '';
+        if (record.returned) {
+            statusText = '已归还';
+            statusClass = 'status-returned'; // 你需要为此类定义CSS
+        } else if (isOverdue) {
+            statusText = '逾期未还';
+            statusClass = 'status-overdue'; // 你需要为此类定义CSS
+        } else {
+            statusText = '借阅中';
+            statusClass = 'status-borrowed'; // 你需要为此类定义CSS
+        }
+        
+        // 确保日期格式化函数存在且能正确处理日期
+        const borrowDateFormatted = record.borrow_date ? formatUtcToLocalDateCommon(record.borrow_date, true) : '-';
+        const dueDateFormatted = record.due_date ? formatUtcToLocalDateCommon(record.due_date, true) : '-';
+        const returnDateFormatted = record.returned && record.return_date ? formatUtcToLocalDateCommon(record.return_date, true) : '-';
+
+        tableHTML += `<tr>
+                        <td>${record.id !== undefined ? record.id : '-'}</td>
+                        <td>${esc(record.isbn || '-')}</td>
+                        <td>${esc(record.book_title || 'N/A')}</td>
+                        <td>${record.user_id !== undefined ? record.user_id : '-'}</td>
+                        <td>${esc(record.username || 'N/A')}</td>
+                        <td>${borrowDateFormatted}</td>
+                        <td>${dueDateFormatted}</td>
+                        <td>${returnDateFormatted}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    </tr>`; 
+    });
+    tableHTML += `</tbody></table>`;
+    listDiv.innerHTML = tableHTML;
+    console.log("[AdminBorrow] Records table rendered.");
 }
