@@ -171,3 +171,168 @@ figure { margin: 0 0 1em 0; } figcaption { font-size: 0.9em; color: var(--light-
     /* 或者其他你喜欢的强调样式 */
     /* background-color: #fffcf2; */
 }
+
+.posts-section { /* postsSection ID 对应的容器 */
+    /* display: flex; flex-direction: column; gap: 30px; (如果需要的话) */
+}
+
+.post-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow, 0 2px 8px rgba(0,0,0,0.08)); /* 使用已定义的变量或默认值 */
+    margin-bottom: 30px;
+    overflow: hidden;
+    display: flex; 
+    flex-direction: column; 
+}
+
+.post-card.featured { /* 焦点文章样式 */
+    flex-direction: column; /* 默认就是 column，但明确一下 */
+}
+
+.post-card:not(.featured) { /* 非焦点列表文章 */
+    flex-direction: row; 
+    align-items: flex-start; 
+}
+
+.post-image { /* 焦点文章大图 */
+    width: 100%;
+    height: auto; 
+    max-height: 400px;
+    object-fit: cover;
+    display: block; /* 确保图片是块级元素 */
+}
+.post-image-small { /* 列表文章小图 */
+    width: 200px; 
+    min-width: 200px; /* 防止在 flex 布局中被过度压缩 */
+    height: 150px; 
+    object-fit: cover;
+    margin-right: 20px;
+    border-radius: 8px 0 0 8px; /* 左侧圆角，如果图片在左 */
+    display: block;
+}
+/* 如果小图在右侧，则调整 margin 和 border-radius */
+
+.post-card .post-content { /* 通用内容区域 */
+    padding: 25px;
+    flex: 1; /* 占据剩余空间，尤其在 :not(.featured) 时 */
+}
+.post-card:not(.featured) .post-content {
+    padding: 20px; 
+}
+
+.post-meta {
+    font-size: 0.85em;
+    color: var(--light-text, #777);
+    margin-bottom: 10px;
+    display: flex; /* 让 meta 项横向排列 */
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 8px 15px; /* 行间距和列间距 */
+}
+.post-meta span:not(:last-child)::after {
+    /* content: '·'; */ /* prototype 中用这个分隔，如果你的 topics 已经是链接，可能不需要 */
+    /* margin: 0 8px; */
+}
+.post-meta .post-category a, .post-meta .topic-tag { /* .post-category 是 prototype 中的类名，我们用的是 .topic-tag */
+    font-weight: 500;
+    color: var(--primary-color, #007bff);
+    /* background-color: #e6f2ff; */ /* 你已有的样式 */
+    /* padding: 3px 8px; */
+    /* border-radius: 4px; */
+    /* font-size: 0.8rem; */
+}
+.post-meta .post-date, .post-meta .post-author {
+    /* 按需添加样式 */
+}
+
+
+.post-title {
+    font-size: 1.8em; 
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.post-card:not(.featured) .post-title {
+    font-size: 1.4em; 
+}
+.post-title a {
+    color: var(--dark-text, #333);
+    text-decoration: none;
+}
+.post-title a:hover {
+    color: var(--primary-color, #0056b3);
+}
+
+.post-excerpt { /* 用于 prototype 中的摘要 */
+    color: #555;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    line-height: 1.7;
+    /* 控制显示行数 (可选) */
+    /* display: -webkit-box;
+    -webkit-line-clamp: 3; 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    min-height: calc(1.7 * 3 * 0.95em); */
+}
+
+
+.read-more { /* 用于焦点文章的阅读全文链接 */
+    display: inline-block;
+    font-weight: bold;
+    color: var(--primary-color, #007bff);
+    margin-top: 15px;
+}
+.read-more:hover {
+    text-decoration: underline;
+}
+
+.post-actions { /* prototype 中的样式 */
+    font-size: 0.9em;
+    color: var(--light-text, #777);
+    /* margin-top: 15px; */ /* 已在 JS 中添加 */
+    display: flex;
+    gap: 15px; /* 动作之间的间距 */
+}
+.post-actions .action-link {
+    /* margin-right: 15px; */ /* 用 gap 代替 */
+    color: var(--light-text, #777);
+    text-decoration: none;
+}
+.post-actions .action-link i {
+    margin-right: 5px;
+}
+.post-actions .action-link:hover {
+    color: var(--primary-color);
+}
+
+.section-title { /* "最新发布" 等标题 */
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+    color: var(--dark-text, #333);
+    /* margin-top: 30px; */ /* 已在 JS 中添加 */
+}
+
+/* 确保你的 .featured-post-card (来自 blog_styles.css) 和这里的 .featured 样式能和谐共处 */
+.post-card.featured-post-card {
+    border-left: 5px solid #ffc107; /* 之前已有的推荐文章边框 */
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .post-card:not(.featured) {
+        flex-direction: column; /* 在小屏幕上堆叠 */
+    }
+    .post-image-small {
+        width: 100%; /* 图片占满卡片宽度 */
+        height: 200px; 
+        margin-right: 0;
+        margin-bottom: 15px;
+        border-radius: 8px 8px 0 0; /* 顶部圆角 */
+    }
+    .post-card:not(.featured) .post-content {
+        padding: 20px; 
+    }
+}
