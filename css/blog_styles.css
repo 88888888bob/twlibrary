@@ -1,35 +1,37 @@
 /* css/blog_styles.css */
-/* --- Reset & Base (if not inherited from a main site CSS) --- */
+
+/* --- Reset & Base (来自 blog_styles.css，基本不变) --- */
 :root {
-    --primary-color: #007bff; /* 你的主题色 */
+    --primary-color: #007bff;
     --secondary-color: #6c757d;
-    --light-bg: #f8f9fa;
-    --dark-text: #212529;
-    --light-text: #6c757d;
-    --border-color: #dee2e6;
-    --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --light-bg: #f8f9fa; /* 或者 #f9f9f9 来自 prototype */
+    --dark-text: #212529; /* 或者 #333 来自 prototype */
+    --light-text: #6c757d; /* 或者 #555, #777 来自 prototype */
+    --border-color: #dee2e6; /* 或者 #ddd, #eee 来自 prototype */
+    --card-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 或者 prototype 中的 0 2px 8px rgba(0,0,0,0.08) */
     --font-sans-serif: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    --font-serif: "Georgia", "Times New Roman", serif; /* For blog content if desired */
+    --font-serif: "Georgia", "Times New Roman", serif;
 }
 
-body.blog-frontend { /* Add class to body of blog pages for specific targeting */
+body.blog-frontend { 
     font-family: var(--font-sans-serif);
-    line-height: 1.7;
+    line-height: 1.7; /* prototype 中是 1.6，这里保留 1.7 */
     color: var(--dark-text);
     background-color: var(--light-bg);
     margin: 0;
-    font-size: 16px; /* Base font size */
+    font-size: 16px;
 }
 
 a { color: var(--primary-color); text-decoration: none; transition: color 0.2s ease; }
 a:hover { text-decoration: underline; color: #0056b3; }
 img { max-width: 100%; height: auto; display: block; }
-figure { margin: 0 0 1em 0; } figcaption { font-size: 0.9em; color: var(--light-text); text-align: center; margin-top: 0.5em; }
+figure { margin: 0 0 1em 0; } 
+figcaption { font-size: 0.9em; color: var(--light-text); text-align: center; margin-top: 0.5em; }
 
 .page-container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
-.blog-page-container { }
+/* .blog-page-container {} */ /* 如果没有特殊样式，可以移除 */
 
-/* --- Navigation (Assuming from main site or similar style) --- */
+/* --- Navigation (来自 blog_styles.css，基本不变，假设这是项目主导航样式) --- */
 .main-nav { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 0 20px; position: sticky; top: 0; z-index: 1000; }
 .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
 .logo { font-size: 1.4rem; font-weight: 700; color: var(--dark-text); }
@@ -37,46 +39,217 @@ figure { margin: 0 0 1em 0; } figcaption { font-size: 0.9em; color: var(--light-
 .nav-links li { margin-left: 20px; }
 .nav-links a { color: #555; font-weight: 500; padding: 8px 0; position: relative; font-size: 0.95rem; }
 .nav-links a.active, .nav-links a:hover { color: var(--primary-color); }
-/* ... (rest of nav styles, mobile menu toggle) ... */
+.menu-toggle { display: none; font-size: 1.5em; cursor: pointer; } /* 移动端显示，来自 prototype */
+/* ... (如果需要，从 prototype 中合并更详细的移动端导航切换样式 .nav-links.active 等) ... */
 
-/* --- Blog Header --- */
-.blog-header { text-align: center; padding: 40px 20px 50px; background: var(--primary-color); color: white; margin-bottom: 35px; border-radius: 8px; }
-.blog-header h1 { font-size: 2.8rem; margin-bottom: 0.5em; font-weight: 700; }
-.blog-header p { font-size: 1.15rem; opacity: 0.9; }
-.blog-header .btn { margin-top: 10px; background-color: white; color: var(--primary-color); border: 1px solid var(--primary-color); }
-.blog-header .btn:hover { background-color: rgba(255,255,255,0.9); }
 
-/* --- Main Content Grid --- */
+/* --- Blog Header (来自 blog_styles.css, 可根据 prototype 调整颜色) --- */
+.blog-header { 
+    text-align: center; 
+    padding: 40px 20px 50px; 
+    /* background: var(--primary-color); color: white;  /* from blog_styles.css */
+    background-color: #eef4f7; /* from prototype - 淡蓝色背景 */
+    color: var(--dark-text); /* 确保文字颜色在淡背景上可读 */
+    margin-bottom: 35px; 
+    border-radius: 8px; 
+}
+.blog-header h1 { 
+    font-size: 2.8rem; 
+    margin-bottom: 0.5em; 
+    font-weight: 700; 
+    color: #2c3e50; /* from prototype */
+}
+.blog-header p { 
+    font-size: 1.15rem; 
+    /* opacity: 0.9; */ /* from blog_styles.css */
+    color: #555; /* from prototype */
+}
+.blog-header .btn { /* 写文章按钮 */
+    margin-top: 10px; 
+    background-color: var(--primary-color); 
+    color: white; 
+    border: 1px solid var(--primary-color);
+    padding: 8px 15px;
+    border-radius: 4px;
+}
+.blog-header .btn:hover { 
+    background-color: #0056b3; /* 深一点的 primary color */
+}
+
+/* --- Main Content Grid (来自 blog_styles.css，但与 prototype 的 flex 布局不同，这里保留 grid) --- */
 .blog-main-content { display: grid; grid-template-columns: repeat(12, 1fr); gap: 35px; }
 .posts-section { grid-column: span 12; }
 .sidebar-section { grid-column: span 12; margin-top: 30px; }
-@media (min-width: 992px) { .posts-section { grid-column: span 8; } .sidebar-section { grid-column: span 4; margin-top: 0; } }
+@media (min-width: 992px) { 
+    .posts-section { grid-column: span 8; } 
+    .sidebar-section { grid-column: span 4; margin-top: 0; } 
+}
 
-/* --- Article Cards --- */
-.post-card-item { background-color: #fff; border-radius: 12px; box-shadow: var(--card-shadow); margin-bottom: 35px; overflow: hidden; display: flex; flex-direction: column; }
-.post-card-item:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-.post-thumbnail-link { display: block; }
-.post-thumbnail { width: 100%; height: 240px; object-fit: cover; }
-.post-card-content { padding: 25px 30px; flex-grow: 1; display: flex; flex-direction: column; }
-.post-meta-info { font-size: 0.85rem; color: var(--light-text); margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; }
-.post-meta-info .meta-item { display: inline-flex; align-items: center; }
-.post-meta-info .meta-item i { margin-right: 6px; opacity: 0.7; }
-.post-category-link, .topic-tag { font-weight: 500; color: var(--primary-color); background-color: #e6f2ff; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; }
-.topic-tag:hover { background-color: #cce4ff; }
-.post-title-link { display: block; font-size: 1.6rem; font-weight: 700; color: var(--dark-text); margin-bottom: 12px; line-height: 1.35; }
-.post-title-link:hover { color: var(--primary-color); text-decoration: none; }
-.post-excerpt-text { font-size: 1rem; color: #454545; margin-bottom: 18px; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; min-height: calc(1.7 * 3 * 1rem); }
-.post-book-association { font-size: 0.9rem; color: var(--light-text); margin-top: -10px; margin-bottom: 15px; }
+/* --- Article Cards (主要来自 blog_prototype.css，并与 blog_styles.css 结合) --- */
+.section-title { /* "最新发布" 等标题，from prototype */
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee; /* var(--border-color) */
+    color: var(--dark-text);
+}
+
+.post-card { /* 替换 .post-card-item */
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 30px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column; /* 默认是纵向排列 */
+}
+.post-card:hover { /* 悬浮效果可以保留 */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+}
+
+.post-card.featured { 
+    /* 特殊样式，如果焦点文章需要不同的 flex-direction (prototype 中是 column) */
+    /* flex-direction: column; */ /* 已经是 column */
+}
+.post-card:not(.featured) {
+    flex-direction: row; /* 水平排列，图片在左 */
+    align-items: flex-start; 
+}
+
+.post-image { /* 焦点文章大图 */
+    width: 100%;
+    height: auto; 
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+}
+.post-image-small { /* 列表文章小图 */
+    width: 200px; 
+    min-width: 200px;
+    height: 150px; 
+    object-fit: cover;
+    margin-right: 20px;
+    border-radius: 8px 0 0 8px; 
+    display: block;
+}
+
+.post-card .post-content { /* 内容区 */
+    padding: 25px; /* for featured */
+    flex: 1; 
+}
+.post-card:not(.featured) .post-content {
+    padding: 20px;
+}
+
+.post-meta { /* 元信息区域 */
+    font-size: 0.85em;
+    color: var(--light-text, #777);
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 15px; /* 之前是 .post-meta-info */
+}
+.post-meta .post-category a, /* .post-category 是 prototype 中的类，如果 JS 生成了它 */
+.post-meta .topic-tag { /* .topic-tag 是你之前 JS 生成的 */
+    font-weight: 500;
+    color: var(--primary-color);
+    /* 以下是你之前的 .topic-tag 样式，可以保留或调整 */
+    /* background-color: #e6f2ff; */
+    /* padding: 3px 8px; */
+    /* border-radius: 4px; */
+    /* font-size: 0.8rem; */
+}
+.post-meta .post-date, .post-meta .post-author {
+    /* 按需添加具体样式 */
+}
+.post-meta .post-meta-item i, /* 之前 .post-meta-info .meta-item i */
+.post-meta .action-link i { /* 之前 .post-actions .action-link i */
+    margin-right: 6px;
+    opacity: 0.7;
+}
+
+
+.post-title { /* 标题 */
+    font-size: 1.8em; /* 焦点文章标题 */
+    margin-top: 0;
+    margin-bottom: 15px;
+    line-height: 1.35; /* 来自 blog_styles.css */
+}
+.post-card:not(.featured) .post-title {
+    font-size: 1.4em; /* 列表文章标题 */
+}
+.post-title a {
+    color: var(--dark-text);
+    text-decoration: none;
+}
+.post-title a:hover {
+    color: var(--primary-color);
+}
+/* 文章卡片中推荐星标 (来自 blog_styles.css) */
+.post-card .post-title .featured-star-public {
+    color: #ffc107; 
+    font-size: 0.7em; 
+    margin-left: 8px;
+    vertical-align: middle; 
+}
+.post-card.featured-post-card { /* 来自 blog_styles.css，用于后台判断的推荐文章 */
+    border-left: 5px solid #ffc107; 
+}
+
+
+.post-excerpt { /* 摘要，来自 prototype */
+    color: #555; /* var(--light-text) */
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    line-height: 1.7;
+    /* 移除之前的 -webkit-line-clamp，如果需要再加回来 */
+}
+.post-book-association { /* 关联书籍，来自 blog_styles.css */
+    font-size: 0.9em; 
+    color: var(--light-text); 
+    /* margin-top: -10px; */ /* 调整为与 .post-excerpt 的间距协调 */
+    margin-bottom: 15px; 
+}
 .post-book-association i { margin-right: 5px; }
-.post-card-footer { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--light-text); border-top: 1px solid #f0f0f0; margin-top: auto; }
-.read-more-link { font-weight: 600; color: var(--primary-color); padding: 8px 16px; border-radius: 25px; transition: background-color 0.2s, color 0.2s; border: 1px solid transparent; }
-.read-more-link:hover { background-color: var(--primary-color); color: white; text-decoration: none; border-color: var(--primary-color); }
-.post-stats .stat-item { margin-left: 18px; }
-.post-stats .stat-item i { margin-right: 5px; opacity: 0.8; }
 
-/* --- Article Detail Page --- */
+.read-more { /* "阅读全文" 链接，主要用于焦点文章，来自 prototype */
+    display: inline-block;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-top: 15px; /* 如果摘要内容不多，这个间距可能需要调整 */
+}
+.read-more:hover {
+    text-decoration: none; /* prototype 中无下划线 */
+    color: #0056b3;
+}
+
+.post-actions { /* 评论数、阅读数等，来自 prototype */
+    font-size: 0.9em;
+    color: var(--light-text, #777);
+    /* margin-top: 15px; */ /* 移到 .post-card-footer 或在 JS 生成时控制 */
+    display: flex;
+    gap: 15px;
+}
+.post-actions .action-link {
+    color: var(--light-text, #777);
+    text-decoration: none;
+}
+.post-actions .action-link:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+
+/* .post-card-footer (你之前有的，可以看是否与 .post-actions 合并或保留) */
+/* 如果保留 .post-card-footer, .post-actions 可以作为其子元素 */
+/* 为了与 prototype 对齐，暂时不使用 .post-card-footer */
+/* .read-more-link 和 .post-stats 也可以整合到 .post-actions 或 .post-content 中 */
+
+
+/* --- Article Detail Page (来自 blog_styles.css，基本不变) --- */
 .post-detail-container { max-width: 800px; margin: 30px auto; background-color: #fff; padding: 35px 45px; border-radius: 10px; box-shadow: var(--card-shadow); }
 .post-detail-header h1 { font-size: 2.5rem; margin-bottom: 15px; color: #2c3e50; line-height: 1.3; font-weight: 700; }
+.post-detail-header h1 .featured-star-public { color: #ffc107; font-size: 0.6em; margin-left: 10px; vertical-align: middle; } /* 详情页星标 */
 .post-detail-meta { display: flex; flex-wrap: wrap; gap: 10px 25px; color: var(--light-text); font-size: 0.95rem; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
 .post-detail-meta .meta-item i { margin-right: 7px; }
 .post-content-area { line-height: 1.8; font-size: 1.1rem; color: var(--dark-text); }
@@ -87,10 +260,12 @@ figure { margin: 0 0 1em 0; } figcaption { font-size: 0.9em; color: var(--light-
 .post-content-area img { max-width: 100%; height: auto; margin: 25px auto; display:block; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
 .post-content-area blockquote { border-left: 5px solid var(--primary-color); padding: 10px 20px; margin: 25px 0; font-style: italic; color: #444; background-color: #f9f9f9; border-radius: 0 5px 5px 0; }
 .post-content-area pre, .post-content-area .ql-syntax { background-color: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 5px; overflow-x: auto; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 0.9em; margin: 25px 0; }
-.post-content-area .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.5em 0; } /* KaTeX display mode */
+.post-content-area .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.5em 0; }
 .post-associations { margin-top: 35px; padding-top: 25px; border-top: 1px solid var(--border-color); }
 .post-associations h4 { font-size: 1.2rem; margin-bottom: 12px; color: #333; font-weight: 600; }
-.post-associations .tag-link, .post-associations .book-link { margin-right: 10px; margin-bottom: 10px; }
+.post-associations .tag-link, .post-associations .book-link { display: inline-block; margin-right: 10px; margin-bottom: 10px; background-color: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 4px; font-size: 0.9em;} /* 统一标签样式 */
+.post-associations .tag-link:hover, .post-associations .book-link:hover { background-color: #007bff; color: #fff; text-decoration: none;}
+
 .post-actions-footer { margin-top: 35px; display: flex; justify-content: space-between; align-items: center; padding-top:20px; border-top:1px solid #eee;}
 .like-button { background-color: #f0f0f0; color: #555; border: 1px solid #ccc; padding: 10px 18px; border-radius: 25px; cursor: pointer; transition: all 0.2s ease; font-weight: 500; }
 .like-button:hover { background-color: #e0e0e0; border-color: #bbb; }
@@ -100,41 +275,126 @@ figure { margin: 0 0 1em 0; } figcaption { font-size: 0.9em; color: var(--light-
 .like-button i { margin-right: 7px; }
 .edit-post-link { font-size: 0.9rem; color: var(--secondary-color); } .edit-post-link:hover { color: var(--primary-color); }
 
-/* --- Sidebar Widgets --- */
-.widget { background-color: #fff; padding: 20px 25px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 30px; }
-.widget-title { font-size: 1.25rem; font-weight: 600; margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; color: var(--dark-text); }
-/* ... (search form, widget list, tag cloud styles from prototype, can be refined) ... */
+/* --- Sidebar Widgets (大部分来自 blog_prototype.css, 调整以适应现有变量) --- */
+.widget { 
+    background-color: #fff; 
+    padding: 20px 25px; 
+    border-radius: 8px; /* prototype 是 8px, blog_styles 是 10px, 统一为 8px */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); /* prototype 的阴影更轻 */
+    margin-bottom: 25px; /* prototype */
+}
+.widget-title { 
+    font-size: 1.2em; /* prototype */
+    font-weight: 600; 
+    margin-top: 0; 
+    margin-bottom: 15px; /* prototype */
+    padding-bottom: 10px; /* prototype */
+    border-bottom: 1px solid #eee; /* var(--border-color) */
+    color: var(--dark-text); 
+}
+.widget-list { list-style: none; padding: 0; margin: 0; }
+.widget-list li { margin-bottom: 10px; }
+.widget-list li a { color: var(--light-text, #555); }
+.widget-list li a:hover { color: var(--primary-color); }
+.widget-list .count { font-size: 0.9em; color: #aaa; margin-left: 5px; } /* 新增计数样式 */
+/* .post-meta-small from prototype - 如果用于热门文章等列表项 */
+.post-meta-small { font-size: 0.8em; color: #888; display: block; margin-top: 3px; }
 
-/* --- Pagination --- */
-.pagination-nav ul { list-style: none; padding: 0; display: flex; justify-content: center; margin-top: 40px; }
-/* ... (pagination styles from prototype, can be refined) ... */
+/* 搜索框 from prototype */
+.search-form { display: flex; }
+.search-form input[type="search"] { 
+    flex-grow: 1; padding: 10px; border: 1px solid var(--border-color, #ddd); 
+    border-right: none; border-radius: 4px 0 0 4px; outline: none; font-size: 0.95rem;
+}
+.search-form button { 
+    padding: 10px 12px; border: 1px solid var(--primary-color); 
+    background-color: var(--primary-color); color: #fff; cursor: pointer; 
+    border-radius: 0 4px 4px 0;
+}
+.search-form button:hover { background-color: #0056b3; }
 
-/* --- Loading & Error Placeholders --- */
+/* 标签云 from prototype - 如果你的 topic widget 也用这种形式 */
+.tag-cloud .tag { /* prototype 中用 .tag, 你的是 .topic-tag */
+    display: inline-block; background-color: #e9ecef; color: #495057; 
+    padding: 5px 10px; margin-right: 5px; margin-bottom: 5px; 
+    border-radius: 4px; font-size: 0.9em;
+}
+.tag-cloud .tag:hover { background-color: var(--primary-color); color: #fff; text-decoration: none;}
+
+
+/* --- Pagination (来自 blog_prototype.css，可根据需要调整样式) --- */
+.pagination-nav { /* ID=blogPaginationContainer 的容器 */
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+.pagination-nav ul { list-style: none; padding: 0; display: flex; justify-content: center; flex-wrap: wrap;}
+.pagination-nav .page-item { margin: 0 4px; }
+.pagination-nav .page-link {
+    display: inline-block;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, #ddd);
+    color: var(--light-text, #555);
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.pagination-nav .page-item.active .page-link,
+.pagination-nav .page-link:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    text-decoration: none;
+}
+.pagination-nav .page-item.disabled .page-link {
+    color: #aaa;
+    pointer-events: none;
+    background-color: #f9f9f9;
+}
+
+
+/* --- Loading & Error Placeholders (来自 blog_styles.css) --- */
 .loading-placeholder { text-align: center; padding: 50px 20px; font-style: italic; color: var(--light-text); font-size: 1.1rem; }
 .loading-placeholder.small { font-size: 0.9em; padding: 25px; }
 .error-message { color: #d9534f; background-color: #fdf7f7; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; text-align: center; }
 
-/* --- Footer --- */
-.main-footer { text-align: center; padding: 30px 20px; background-color: #2c3e50; color: #bdc3c7; margin-top: 50px; font-size: 0.9rem; }
-
-/* --- Responsive (Example) --- */
-@media (max-width: 768px) {
-    .blog-header h1 { font-size: 2rem; }
-    .blog-header p { font-size: 1rem; }
-    .post-detail-header h1 { font-size: 1.8rem; }
-    .post-content-area { font-size: 1rem; }
-    .form-row { flex-direction: column; gap: 0; } /* Stack form row items on mobile */
+/* --- Footer (来自 blog_styles.css，与 prototype 的深色页脚不同，保留你现有的) --- */
+.main-footer { 
+    text-align: center; 
+    padding: 30px 20px; 
+    background-color: #2c3e50; /* prototype 中是 #343a40，选择一个或用变量 */
+    color: #adb5bd; /* prototype */
+    margin-top: 50px; 
+    font-size: 0.9rem; 
 }
 
+/* --- Utility Buttons (来自 blog_styles.css) --- */
+.btn { /* 通用按钮，如果你的“写新文章”等用到了 */
+    display: inline-block;
+    padding: 8px 16px; /* 调整为与 prototype 协调 */
+    border-radius: 4px; /* 调整为与 prototype 协调 */
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.btn-primary { /* 如“写新文章”按钮 */
+    background-color: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+}
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
 .btn-outline-secondary {
-    color: #6c757d;
-    border-color: #6c757d;
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
     background-color: transparent;
 }
 .btn-outline-secondary:hover {
     color: #fff;
-    background-color: #6c757d;
-    border-color: #6c757d;
+    background-color: var(--secondary-color);
 }
 .btn-sm {
     padding: 0.25rem 0.5rem;
@@ -142,197 +402,41 @@ figure { margin: 0 0 1em 0; } figcaption { font-size: 0.9em; color: var(--light-
     border-radius: 0.2rem;
 }
 
-/* css/blog_styles.css */
-/* ... (之前的样式) ... */
-
-/* 文章卡片中推荐星标 (如果之前已有 featured-badge，可以复用或调整) */
-.post-card-item .post-title .featured-star-public {
-    color: #ffc107; /* 金黄色 */
-    font-size: 0.7em; /* 相对于标题的字号 */
-    margin-left: 8px;
-    vertical-align: middle; /* 或 super, top，根据视觉效果调整 */
-}
-.post-card-item.featured-post-card .post-title-link {
-    /* 可以给推荐文章的标题加一点点缀，如果星标不够明显 */
-    /* color: #0056b3; */
-}
-
-/* 文章详情页标题中的推荐星标 */
-.post-detail-header h1 .featured-star-public {
-    color: #ffc107;
-    font-size: 0.6em; /* 相对于 H1 标题的字号 */
-    margin-left: 10px;
-    vertical-align: middle; /* 或者尝试 top, super */
-}
-
-/* 如果之前为卡片添加了 .featured-post-card 类，确保其样式能突出显示 */
-.post-card-item.featured-post-card {
-    border-left: 5px solid #ffc107; /* 左侧加一个黄色边框 */
-    /* 或者其他你喜欢的强调样式 */
-    /* background-color: #fffcf2; */
-}
-
-.posts-section { /* postsSection ID 对应的容器 */
-    /* display: flex; flex-direction: column; gap: 30px; (如果需要的话) */
-}
-
-.post-card {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: var(--card-shadow, 0 2px 8px rgba(0,0,0,0.08)); /* 使用已定义的变量或默认值 */
-    margin-bottom: 30px;
-    overflow: hidden;
-    display: flex; 
-    flex-direction: column; 
-}
-
-.post-card.featured { /* 焦点文章样式 */
-    flex-direction: column; /* 默认就是 column，但明确一下 */
-}
-
-.post-card:not(.featured) { /* 非焦点列表文章 */
-    flex-direction: row; 
-    align-items: flex-start; 
-}
-
-.post-image { /* 焦点文章大图 */
-    width: 100%;
-    height: auto; 
-    max-height: 400px;
-    object-fit: cover;
-    display: block; /* 确保图片是块级元素 */
-}
-.post-image-small { /* 列表文章小图 */
-    width: 200px; 
-    min-width: 200px; /* 防止在 flex 布局中被过度压缩 */
-    height: 150px; 
-    object-fit: cover;
-    margin-right: 20px;
-    border-radius: 8px 0 0 8px; /* 左侧圆角，如果图片在左 */
-    display: block;
-}
-/* 如果小图在右侧，则调整 margin 和 border-radius */
-
-.post-card .post-content { /* 通用内容区域 */
-    padding: 25px;
-    flex: 1; /* 占据剩余空间，尤其在 :not(.featured) 时 */
-}
-.post-card:not(.featured) .post-content {
-    padding: 20px; 
-}
-
-.post-meta {
-    font-size: 0.85em;
-    color: var(--light-text, #777);
-    margin-bottom: 10px;
-    display: flex; /* 让 meta 项横向排列 */
-    flex-wrap: wrap; /* 允许换行 */
-    gap: 8px 15px; /* 行间距和列间距 */
-}
-.post-meta span:not(:last-child)::after {
-    /* content: '·'; */ /* prototype 中用这个分隔，如果你的 topics 已经是链接，可能不需要 */
-    /* margin: 0 8px; */
-}
-.post-meta .post-category a, .post-meta .topic-tag { /* .post-category 是 prototype 中的类名，我们用的是 .topic-tag */
-    font-weight: 500;
-    color: var(--primary-color, #007bff);
-    /* background-color: #e6f2ff; */ /* 你已有的样式 */
-    /* padding: 3px 8px; */
-    /* border-radius: 4px; */
-    /* font-size: 0.8rem; */
-}
-.post-meta .post-date, .post-meta .post-author {
-    /* 按需添加样式 */
-}
-
-
-.post-title {
-    font-size: 1.8em; 
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-.post-card:not(.featured) .post-title {
-    font-size: 1.4em; 
-}
-.post-title a {
-    color: var(--dark-text, #333);
-    text-decoration: none;
-}
-.post-title a:hover {
-    color: var(--primary-color, #0056b3);
-}
-
-.post-excerpt { /* 用于 prototype 中的摘要 */
-    color: #555;
-    margin-bottom: 20px;
-    font-size: 0.95em;
-    line-height: 1.7;
-    /* 控制显示行数 (可选) */
-    /* display: -webkit-box;
-    -webkit-line-clamp: 3; 
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis; 
-    min-height: calc(1.7 * 3 * 0.95em); */
-}
-
-
-.read-more { /* 用于焦点文章的阅读全文链接 */
-    display: inline-block;
-    font-weight: bold;
-    color: var(--primary-color, #007bff);
-    margin-top: 15px;
-}
-.read-more:hover {
-    text-decoration: underline;
-}
-
-.post-actions { /* prototype 中的样式 */
-    font-size: 0.9em;
-    color: var(--light-text, #777);
-    /* margin-top: 15px; */ /* 已在 JS 中添加 */
-    display: flex;
-    gap: 15px; /* 动作之间的间距 */
-}
-.post-actions .action-link {
-    /* margin-right: 15px; */ /* 用 gap 代替 */
-    color: var(--light-text, #777);
-    text-decoration: none;
-}
-.post-actions .action-link i {
-    margin-right: 5px;
-}
-.post-actions .action-link:hover {
-    color: var(--primary-color);
-}
-
-.section-title { /* "最新发布" 等标题 */
-    font-size: 1.6em;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #eee;
-    color: var(--dark-text, #333);
-    /* margin-top: 30px; */ /* 已在 JS 中添加 */
-}
-
-/* 确保你的 .featured-post-card (来自 blog_styles.css) 和这里的 .featured 样式能和谐共处 */
-.post-card.featured-post-card {
-    border-left: 5px solid #ffc107; /* 之前已有的推荐文章边框 */
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .post-card:not(.featured) {
-        flex-direction: column; /* 在小屏幕上堆叠 */
+/* --- Responsive (基本框架来自 prototype, 细化调整) --- */
+@media (max-width: 850px) { /* prototype 的断点 */
+    /* 导航栏响应式 */
+    .nav-links {
+        display: none; 
+        flex-direction: column; position: absolute;
+        top: 60px; /* 导航栏高度 */
+        left: 0; width: 100%;
+        background-color: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .post-image-small {
-        width: 100%; /* 图片占满卡片宽度 */
-        height: 200px; 
-        margin-right: 0;
-        margin-bottom: 15px;
-        border-radius: 8px 8px 0 0; /* 顶部圆角 */
+    .nav-links.active { display: flex; }
+    .nav-links li { margin: 0; text-align: center; border-bottom: 1px solid #f0f0f0; }
+    .nav-links li:last-child { border-bottom: none; }
+    .nav-links a { display: block; padding: 15px; }
+    .menu-toggle { display: block; }
+
+    /* 主内容区响应式 */
+    .blog-main-content {
+        grid-template-columns: 1fr; /* 单列布局 */
     }
-    .post-card:not(.featured) .post-content {
-        padding: 20px; 
+    .sidebar-section {
+        grid-column: span 1; /* 占满整行 */
+        margin-top: 30px;
     }
+    .posts-section {
+        grid-column: span 1; /* 占满整行 */
+    }
+    
+    /* 卡片在小屏幕上的调整已在 .post-card:not(.featured) 和 .post-image-small 的 @media 中处理 */
+}
+
+@media (max-width: 768px) { /* blog_styles.css 已有的断点，可以合并或调整 */
+    .blog-header h1 { font-size: 2rem; }
+    .blog-header p { font-size: 1rem; }
+    .post-detail-header h1 { font-size: 1.8rem; }
+    .post-content-area { font-size: 1rem; }
+    /* .form-row { flex-direction: column; gap: 0; } /* 这个是表单的，与博客列表无关 */
 }
