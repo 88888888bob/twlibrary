@@ -5,7 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us</title>
     <link href="https://fonts.googleapis.com/css2?family=Julius+Sans+One&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="contact.css">
+    <style>
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .spinner {
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top: 3px solid #3498db;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
 
@@ -23,20 +53,153 @@
         <h1>Contact Us</h1>
         <p>If you have any questions or feedback, feel free to reach out to us using the form below!</p>
 
-        <!-- Contact Form -->
-        <form action="#" method="post">
+        <!-- Contact Form with ID -->
+        <form id="contact-form" action="#" method="post">
             <label for="name">Your Name:</label>
             <input type="text" id="name" name="name" required>
+            <span id="name-error" class="error"></span>
 
             <label for="email">Your Email:</label>
             <input type="email" id="email" name="email" required>
+            <span id="email-error" class="error"></span>
 
             <label for="message">Your Message:</label>
             <textarea id="message" name="message" rows="4" required></textarea>
+            <span id="message-error" class="error"></span>
 
-            <button type="submit">Submit</button>
+            <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
+            <span id="captcha-error" class="error"></span>
+
+            <button type="submit" id="submit-button">Submit</button>
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Sending your message...</span>
+            </div>
         </form>
     </section>
 
+    <script>
+        // Initialize EmailJS with your user ID
+        emailjs.init("YOUR_USER_ID"); // Replace with your EmailJS User ID
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const contactForm = document.getElementById('contact-form');
+            const submitButton = document.getElementById('submit-button');
+            const loadingIndicator = document.querySelector('.loading');
+            
+            // Form validation
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                let isValid = true;
+                
+                // Reset previous errors
+                document.querySelectorAll('.error').forEach(el => el.textContent = '');
+                
+                // Validate name
+                const name = document.getElementById('name').value.trim();
+                if (name === '') {
+                    document.getElementById('name-error').textContent = 'Name is required';
+                    isValid = false;
+                }
+                
+                // Validate email
+                const email = document.getElementById('email').value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    document.getElementById('email-error').textContent = 'Please enter a valid email address';
+                    isValid = false;
+                }
+                
+                // Validate message
+                const message = document.getElementById('message').value.trim();
+                if (message === '') {
+                    document.getElementById('message-error').textContent = 'Message is required';
+                    isValid = false;
+                } else if (message.length < 10) {
+                    document.getElementById('message-error').textContent = 'Message must be at least 10 characters';
+                    isValid = false;
+                }
+                
+                // Validate CAPTCHA
+                if (!grecaptcha.getResponse()) {
+                    document.getElementById('captcha-error').textContent = 'Please complete the CAPTCHA';
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    // Show loading indicator and disable button
+                    loadingIndicator.style.display = 'flex';
+                    submitButton.disabled = true;
+                    
+                    // Collect form data
+                    const formData = {
+                        name: name,
+                        user_email: email,
+                        message: message
+                    };
+                    
+                    // Send email to the user
+                    emailjs.send("YOUR_SERVICE_ID", "USER_TEMPLATE_ID", formData)
+                        .then(function(response) {
+                            console.log('SUCCESS to user', response.status, response.text);
+                        }, function(error) {
+                            console.log('FAILED to user', error);
+                        });
+                    
+                    // Send email to balav1115@outlook.com
+                    const recipientData = {
+                        from_name: formData.name,
+                        from_email: formData.user_email,
+                        message: formData.message
+                    };
+                    
+                    emailjs.send("YOUR_SERVICE_ID", "RECIPIENT_TEMPLATE_ID", recipientData)
+                        .then(function(response) {
+                            console.log('SUCCESS to recipient', response.status, response.text);
+                            alert('Thank you for your feedback!');
+                            contactForm.reset();
+                            grecaptcha.reset();
+                        })
+                        .catch(function(error) {
+                            console.log('FAILED to recipient', error);
+                            alert('Oops! Something went wrong. Please try again later.');
+                        })
+                        .finally(function() {
+                            // Hide loading indicator and re-enable button
+                            loadingIndicator.style.display = 'none';
+                            submitButton.disabled = false;
+                        });
+                }
+            });
+            
+            // Real-time validation
+            document.getElementById('name').addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    document.getElementById('name-error').textContent = 'Name is required';
+                } else {
+                    document.getElementById('name-error').textContent = '';
+                }
+            });
+            
+            document.getElementById('email').addEventListener('blur', function() {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(this.value.trim())) {
+                    document.getElementById('email-error').textContent = 'Please enter a valid email address';
+                } else {
+                    document.getElementById('email-error').textContent = '';
+                }
+            });
+            
+            document.getElementById('message').addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    document.getElementById('message-error').textContent = 'Message is required';
+                } else if (this.value.length < 10) {
+                    document.getElementById('message-error').textContent = 'Message must be at least 10 characters';
+                } else {
+                    document.getElementById('message-error').textContent = '';
+                }
+            });
+        });
+    </script>
 </body>
-</html>
+</html>    
