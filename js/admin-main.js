@@ -1,7 +1,7 @@
 // js/admin-main.js
 
 let currentUserRole = null; // <--- 新增全局变量存储用户角色
-let LOGIN_PAGE_URL = '/sign_up_login_page'; // <--- 新增全局变量存储登录页面 URL
+// let LOGIN_PAGE_URL = '/sign_up_login_page'; // <--- 新增全局变量存储登录页面 URL
 
 // Ensure necessary globals from admin-utils.js and admin-modals.js are loaded first.
 // For example: API_BASE_URL, LOGIN_PAGE_URL, contentArea, showLoading, apiCall, showAlert, showConfirm
