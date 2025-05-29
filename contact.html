@@ -6,12 +6,95 @@
     <title>Contact Us</title>
     <link href="https://fonts.googleapis.com/css2?family=Julius+Sans+One&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <!-- Google reCAPTCHA API script -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="contact.css">
     <style>
+        body {
+            font-family: 'Arial', sans-serif; /* Added a fallback font */
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 1em 0;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 20px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-family: 'Julius Sans One', sans-serif;
+        }
+        #contact {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        #contact h1 {
+            font-family: 'Julius Sans One', sans-serif;
+            color: #333;
+            text-align: center;
+        }
+        #contact p {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: calc(100% - 22px); /* Account for padding and border */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* Important for width calculation */
+        }
+        textarea {
+            resize: vertical;
+        }
+        button[type="submit"] {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button[type="submit"]:hover {
+            background-color: #4cae4c;
+        }
+        button[type="submit"]:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .g-recaptcha {
+            margin-bottom: 15px;
+        }
         .loading {
-            display: none;
+            display: none; /* Initially hidden */
             align-items: center;
             justify-content: center;
             margin-top: 10px;
@@ -19,7 +102,7 @@
         .spinner {
             border: 3px solid rgba(0,0,0,0.1);
             border-radius: 50%;
-            border-top: 3px solid #3498db;
+            border-top: 3px solid #3498db; /* Blue spinner */
             width: 20px;
             height: 20px;
             animation: spin 1s linear infinite;
@@ -32,8 +115,10 @@
         .error {
             color: red;
             font-size: 0.9em;
-            display: block;
-            margin-top: 5px;
+            display: block; /* Make it take its own line */
+            margin-top: -5px; /* Adjust spacing */
+            margin-bottom: 10px; /* Add some space below error */
+            min-height: 1.2em; /* Reserve space to prevent layout shifts */
         }
     </style>
 </head>
@@ -56,18 +141,19 @@
         <!-- Contact Form with ID -->
         <form id="contact-form" action="#" method="post">
             <label for="name">Your Name:</label>
-            <input type="text" id="name" name="name" required>
+            <input type="text" id="name" name="name">
             <span id="name-error" class="error"></span>
 
             <label for="email">Your Email:</label>
-            <input type="email" id="email" name="email" required>
+            <input type="email" id="email" name="email">
             <span id="email-error" class="error"></span>
 
             <label for="message">Your Message:</label>
-            <textarea id="message" name="message" rows="4" required></textarea>
+            <textarea id="message" name="message" rows="4"></textarea>
             <span id="message-error" class="error"></span>
 
-            <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
+            <!-- Google reCAPTCHA Widget -->
+            <div class="g-recaptcha" data-sitekey="6LcgLk4rAAAAAM-bxN5KLqbR7zs2UqYzceaKUDqu"></div>
             <span id="captcha-error" class="error"></span>
 
             <button type="submit" id="submit-button">Submit</button>
@@ -79,127 +165,168 @@
     </section>
 
     <script>
-        // Initialize EmailJS with your user ID
-        emailjs.init("YOUR_USER_ID"); // Replace with your EmailJS User ID
+        // IMPORTANT: Replace with your actual EmailJS User ID
+        emailjs.init("YOUR_USER_ID"); 
 
         document.addEventListener('DOMContentLoaded', function() {
             const contactForm = document.getElementById('contact-form');
             const submitButton = document.getElementById('submit-button');
             const loadingIndicator = document.querySelector('.loading');
             
-            // Form validation
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const messageInput = document.getElementById('message');
+
+            const nameError = document.getElementById('name-error');
+            const emailError = document.getElementById('email-error');
+            const messageError = document.getElementById('message-error');
+            const captchaError = document.getElementById('captcha-error');
+
+            function validateName() {
+                const name = nameInput.value.trim();
+                if (name === '') {
+                    nameError.textContent = 'Name is required';
+                    return false;
+                }
+                nameError.textContent = '';
+                return true;
+            }
+
+            function validateEmail() {
+                const email = emailInput.value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (email === '') {
+                    emailError.textContent = 'Email is required';
+                    return false;
+                }
+                if (!emailRegex.test(email)) {
+                    emailError.textContent = 'Please enter a valid email address';
+                    return false;
+                }
+                emailError.textContent = '';
+                return true;
+            }
+
+            function validateMessage() {
+                const message = messageInput.value.trim();
+                if (message === '') {
+                    messageError.textContent = 'Message is required';
+                    return false;
+                } else if (message.length < 10) {
+                    messageError.textContent = 'Message must be at least 10 characters';
+                    return false;
+                }
+                messageError.textContent = '';
+                return true;
+            }
+
+            function validateCaptcha() {
+                if (typeof grecaptcha !== 'undefined' && grecaptcha.getResponse().length === 0) {
+                    captchaError.textContent = 'Please complete the CAPTCHA';
+                    return false;
+                }
+                captchaError.textContent = '';
+                return true;
+            }
+            
             contactForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                let isValid = true;
                 
-                // Reset previous errors
-                document.querySelectorAll('.error').forEach(el => el.textContent = '');
+                const isNameValid = validateName();
+                const isEmailValid = validateEmail();
+                const isMessageValid = validateMessage();
+                const isCaptchaValid = validateCaptcha();
                 
-                // Validate name
-                const name = document.getElementById('name').value.trim();
-                if (name === '') {
-                    document.getElementById('name-error').textContent = 'Name is required';
-                    isValid = false;
-                }
-                
-                // Validate email
-                const email = document.getElementById('email').value.trim();
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    document.getElementById('email-error').textContent = 'Please enter a valid email address';
-                    isValid = false;
-                }
-                
-                // Validate message
-                const message = document.getElementById('message').value.trim();
-                if (message === '') {
-                    document.getElementById('message-error').textContent = 'Message is required';
-                    isValid = false;
-                } else if (message.length < 10) {
-                    document.getElementById('message-error').textContent = 'Message must be at least 10 characters';
-                    isValid = false;
-                }
-                
-                // Validate CAPTCHA
-                if (!grecaptcha.getResponse()) {
-                    document.getElementById('captcha-error').textContent = 'Please complete the CAPTCHA';
-                    isValid = false;
-                }
-                
-                if (isValid) {
-                    // Show loading indicator and disable button
+                if (isNameValid && isEmailValid && isMessageValid && isCaptchaValid) {
                     loadingIndicator.style.display = 'flex';
                     submitButton.disabled = true;
+                    submitButton.textContent = 'Submitting...';
                     
-                    // Collect form data
                     const formData = {
-                        name: name,
-                        user_email: email,
-                        message: message
+                        name: nameInput.value.trim(),
+                        user_email: emailInput.value.trim(), // Parameter name expected by EmailJS template
+                        message: messageInput.value.trim()   // Parameter name expected by EmailJS template
                     };
                     
-                    // Send email to the user
-                    emailjs.send("YOUR_SERVICE_ID", "USER_TEMPLATE_ID", formData)
-                        .then(function(response) {
-                            console.log('SUCCESS to user', response.status, response.text);
-                        }, function(error) {
-                            console.log('FAILED to user', error);
-                        });
-                    
-                    // Send email to balav1115@outlook.com
+                    // IMPORTANT: Replace with your actual EmailJS Service ID and Template IDs
+                    const SERVICE_ID = "service_gv3614z";
+                    const USER_TEMPLATE_ID = "USER_TEMPLATE_ID"; // Template for email to the user
+                    const RECIPIENT_TEMPLATE_ID = "RECIPIENT_TEMPLATE_ID"; // Template for email to balav1115@outlook.com
+
+                    // Prepare data for the recipient (balav1115@outlook.com)
+                    // Ensure your EmailJS template for the recipient is set up to use these parameter names
                     const recipientData = {
                         from_name: formData.name,
-                        from_email: formData.user_email,
-                        message: formData.message
+                        from_email: formData.user_email, 
+                        message_html: formData.message // or 'message' if your template uses that
                     };
-                    
-                    emailjs.send("YOUR_SERVICE_ID", "RECIPIENT_TEMPLATE_ID", recipientData)
-                        .then(function(response) {
-                            console.log('SUCCESS to recipient', response.status, response.text);
-                            alert('Thank you for your feedback!');
-                            contactForm.reset();
-                            grecaptcha.reset();
+
+                    // Send email to the user (optional, if you have a template for it)
+                    // Ensure your EmailJS template for the user is set up to use these parameter names
+                    const userData = {
+                        to_name: formData.name, // For personalization if your template supports it
+                        user_email: formData.user_email,
+                        // You might want to include other details or a generic thank you message
+                    };
+
+                    // Promise for sending email to the user
+                    const sendToUserPromise = emailjs.send(SERVICE_ID, USER_TEMPLATE_ID, userData);
+                     // Uncomment if you want to send to user and handle it
+                        // .then(function(response) {
+                        //     console.log('SUCCESS sending to user', response.status, response.text);
+                        // }, function(error) {
+                        //     console.log('FAILED sending to user', error);
+                        //     // Decide if this failure should prevent the recipient email or alert the user
+                        // });
+
+                    // Promise for sending email to the recipient
+                    const sendToRecipientPromise = emailjs.send(SERVICE_ID, RECIPIENT_TEMPLATE_ID, recipientData);
+
+                    Promise.all([sendToUserPromise.catch(err => err), sendToRecipientPromise]) // Process user email promise but don't let its failure stop recipient email
+                        .then(function(results) {
+                            const recipientResponse = results[1]; // Result of sendToRecipientPromise
+
+                            if (recipientResponse.status === 200 || recipientResponse.text === "OK") { // Check for successful recipient email
+                                console.log('SUCCESS sending to recipient', recipientResponse.status, recipientResponse.text);
+                                alert('Thank you for your feedback!');
+                                contactForm.reset();
+                                if (typeof grecaptcha !== 'undefined') {
+                                    grecaptcha.reset();
+                                }
+                                // Reset error messages as well
+                                nameError.textContent = '';
+                                emailError.textContent = '';
+                                messageError.textContent = '';
+                                captchaError.textContent = '';
+                            } else {
+                                // This block might not be hit if EmailJS send promise resolves even on API error,
+                                // check the console log for actual error from EmailJS in the .catch below.
+                                console.log('EmailJS indicated an issue sending to recipient (but promise resolved):', recipientResponse);
+                                alert('Oops! There was an issue sending your message. Please try again. (Code R1)');
+                            }
                         })
                         .catch(function(error) {
-                            console.log('FAILED to recipient', error);
-                            alert('Oops! Something went wrong. Please try again later.');
+                            console.log('FAILED sending to recipient (or user, if unhandled)', error);
+                            alert('Oops! Something went wrong. Please try again later. (Code E1)');
                         })
                         .finally(function() {
-                            // Hide loading indicator and re-enable button
                             loadingIndicator.style.display = 'none';
                             submitButton.disabled = false;
+                            submitButton.textContent = 'Submit';
                         });
                 }
             });
             
-            // Real-time validation
-            document.getElementById('name').addEventListener('blur', function() {
-                if (this.value.trim() === '') {
-                    document.getElementById('name-error').textContent = 'Name is required';
-                } else {
-                    document.getElementById('name-error').textContent = '';
-                }
-            });
-            
-            document.getElementById('email').addEventListener('blur', function() {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(this.value.trim())) {
-                    document.getElementById('email-error').textContent = 'Please enter a valid email address';
-                } else {
-                    document.getElementById('email-error').textContent = '';
-                }
-            });
-            
-            document.getElementById('message').addEventListener('blur', function() {
-                if (this.value.trim() === '') {
-                    document.getElementById('message-error').textContent = 'Message is required';
-                } else if (this.value.length < 10) {
-                    document.getElementById('message-error').textContent = 'Message must be at least 10 characters';
-                } else {
-                    document.getElementById('message-error').textContent = '';
-                }
-            });
+            // Real-time validation on blur
+            nameInput.addEventListener('blur', validateName);
+            emailInput.addEventListener('blur', validateEmail);
+            messageInput.addEventListener('blur', validateMessage);
+
+            // It's good practice to also clear CAPTCHA error on reCAPTCHA interaction,
+            // but reCAPTCHA API doesn't have a simple 'on interaction' event.
+            // Validation on submit handles it. If reCAPTCHA widget itself shows an error,
+            // it's usually within its own iframe.
         });
     </script>
 </body>
-</html>    
+</html>
